@@ -1,4 +1,164 @@
-# Parking Management System - Technical Documentation
+# Parking Management System
+
+A comprehensive parking management system with user and admin interfaces for managing parking spots, reservations, and user accounts.
+
+## Features
+
+- User authentication (login/register)
+- Parking spot reservation system
+- Admin dashboard for managing users and parking lots
+- Real-time spot availability
+- Reservation history and management
+- User blocking functionality for admins
+
+## Prerequisites
+
+- Python 3.8 or higher
+- pip (Python package installer)
+- Git
+- SQLite (included with Python)
+
+## Setup Instructions
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/DevPatel976/VehicleManagement.git
+cd VehicleManagement
+```
+
+### 2. Create and Activate Virtual Environment
+
+#### On Windows:
+```bash
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+#### On macOS/Linux:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Set Up Environment Variables
+
+Create a `.env` file in the project root with the following content:
+
+```env
+FLASK_APP=app.py
+FLASK_ENV=development
+SECRET_KEY=your-secret-key-here
+DATABASE_URI=sqlite:///parking.db
+```
+
+### 5. Initialize the Database
+
+```bash
+flask db upgrade
+```
+
+### 6. Run the Application
+
+```bash
+flask run
+```
+
+Visit `http://localhost:5000` in your browser.
+
+## Default Admin Account
+
+To create an admin account, run the following in a Python shell:
+
+```python
+from app import create_app, db
+from models.user import User
+
+app = create_app()
+with app.app_context():
+    admin = User(
+        username='admin',
+        email='admin@example.com',
+        is_admin=True
+    )
+    admin.set_password('admin123')
+    db.session.add(admin)
+    db.session.commit()
+```
+
+## Project Structure
+
+```
+parking_app/
+├── app.py                 # Main application entry point
+├── config.py             # Configuration settings
+├── requirements.txt      # Python dependencies
+├── static/               # Static files (CSS, JS, images)
+├── templates/            # HTML templates
+├── migrations/           # Database migration files
+├── models/               # Database models
+└── controllers/          # Application routes and logic
+```
+
+## API Documentation
+
+### Authentication
+
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - User login
+- `GET /auth/logout` - User logout
+
+### User Endpoints
+
+- `GET /user/dashboard` - User dashboard
+- `GET /user/reservations` - View user's reservations
+- `POST /user/reserve` - Create a new reservation
+
+### Admin Endpoints
+
+- `GET /admin/dashboard` - Admin dashboard
+- `GET /admin/users` - Manage users
+- `POST /admin/user/<id>/block` - Block a user
+- `POST /admin/user/<id>/unblock` - Unblock a user
+
+## Troubleshooting
+
+1. **Database Issues**
+   - Delete the database file (`instance/parking.db`)
+   - Run `flask db upgrade`
+   - Restart the application
+
+2. **Package Installation**
+   - Ensure you're using Python 3.8+
+   - Try `pip install --upgrade pip`
+   - Delete the virtual environment and recreate it
+
+3. **Application Not Starting**
+   - Check if port 5000 is available
+   - Ensure all environment variables are set
+   - Check the application logs for errors
+
+## Contributing
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For support, email support@example.com or open an issue in the GitHub repository.
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
