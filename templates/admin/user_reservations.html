@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}User Reservations - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Reservation History</h1>
+            <p class="text-muted mb-0">{{ user.username }} ({{ user.email }})</p>
+        </div>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Users
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">All Reservations</h5>
+            <div class="text-muted">
+                <span class="me-3"><i class="fas fa-user me-1"></i> {{ user.email }}</span>
+                <span><i class="fas fa-calendar-alt me-1"></i> {{ reservations|length }} total reservations</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Parking Spot</th>
+                            <th>Check-in</th>
+                            <th>Check-out</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in reservations %}
+                        <tr>
+                            <td>#{{ res.id }}</td>
+                            <td>
+                                {% if res.spot %}
+                                    {{ res.spot.spot_number }} ({{ res.spot.parking_lot.name }})
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>{{ res.check_in.strftime('%Y-%m-%d %H:%M') if res.check_in else 'N/A' }}</td>
+                            <td>{{ res.check_out.strftime('%Y-%m-%d %H:%M') if res.check_out else 'In Progress' }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if res.status == 'active' %}bg-success
+                                    {% elif res.status == 'completed' %}bg-primary
+                                    {% elif res.status == 'cancelled' %}bg-secondary
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ res.status|title }}
+                                </span>
+                            </td>
+                            <td>{% if res.amount %}${{ '%.2f'|format(res.amount) }}{% else %}N/A{% endif %}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary view-details" 
+                                        data-bs-toggle="tooltip" 
+                                        title="View Details"
+                                        data-reservation-id="{{ res.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">No reservations found for this user.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservation Details Modal -->
+    <div class="modal fade" id="reservationDetailsModal" tabindex="-1" aria-labelledby="reservationDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reservationDetailsModalLabel">Reservation Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="reservationDetailsContent">
+                    <!-- Content will be loaded via AJAX -->
+                    <div class="text-center my-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading reservation details...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Wait for the document to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM fully loaded - initializing...');
+    
+    try {
+        // Check if Bootstrap is available
+        if (typeof bootstrap === 'undefined') {
+            throw new Error('Bootstrap JS is not loaded');
+        }
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        console.log('Tooltips initialized');
+
+        // Initialize the modal
+        const modalElement = document.getElementById('reservationDetailsModal');
+        if (!modalElement) {
+            throw new Error('Modal element not found');
+        }
+        
+        const reservationModal = new bootstrap.Modal(modalElement);
+        console.log('Modal initialized');
+        
+        // Handle view details button clicks using event delegation
+        document.addEventListener('click', function(e) {
+            const button = e.target.closest('.view-details');
+            if (!button) return;
+            
+            e.preventDefault();
+            console.log('View details button clicked');
+            
+            const reservationId = button.getAttribute('data-reservation-id');
+            console.log('Reservation ID:', reservationId);
+            
+            if (reservationId) {
+                loadReservationDetails(reservationId, reservationModal);
+            } else {
+                console.error('No reservation ID found on button');
+                showError('No reservation ID found');
+            }
+        });
+        
+        console.log('Event listeners attached');
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showError('Failed to initialize page: ' + error.message);
+    }
+});
+
+// Function to show error message in the UI
+function showError(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3';
+    alertDiv.style.zIndex = '1100';
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const bsAlert = new bootstrap.Alert(alertDiv);
+        bsAlert.close();
+    }, 5000);
+}
+
+// Function to load reservation details via AJAX
+function loadReservationDetails(reservationId, modalInstance) {
+    const modalContent = document.getElementById('reservationDetailsContent');
+    
+    if (!modalContent) {
+        console.error('Modal content element not found');
+        return;
+    }
+    
+    // Show loading state
+    modalContent.innerHTML = `
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading reservation details...</p>
+        </div>`;
+    
+    // Show the modal
+    modalInstance.show();
+    
+    console.log('Fetching reservation details for ID:', reservationId);
+    
+    // Add cache-busting parameter and ensure correct admin prefix
+    const url = `/admin/api/reservations/${reservationId}?_=${Date.now()}`;
+    console.log('Fetching from URL:', url);
+    
+    fetch(url, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Received data:', data);
+        if (!data) {
+            throw new Error('No data received from server');
+        }
+        
+        // Format and display the reservation details
+        modalContent.innerHTML = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h6>Reservation #${data.id}</h6>
+                    <p class="mb-1"><strong>Status:</strong> 
+                        <span class="badge ${getStatusBadgeClass(data.status)}">
+                            ${data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'Unknown'}
+                        </span>
+                    </p>
+                    <p class="mb-1"><strong>User:</strong> ${data.user?.username || 'N/A'} (${data.user?.email || 'N/A'})</p>
+                    <p class="mb-1"><strong>Vehicle:</strong> ${data.vehicle_registration || 'Not specified'}</p>
+                    <p class="mb-1"><strong>Driver's License:</strong> ${data.drivers_license || 'Not specified'}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Timing</h6>
+                    <p class="mb-1"><strong>Check-in:</strong> ${data.check_in ? new Date(data.check_in).toLocaleString() : 'N/A'}</p>
+                    <p class="mb-1"><strong>Check-out:</strong> ${data.check_out ? new Date(data.check_out).toLocaleString() : 'In Progress'}</p>
+                    <p class="mb-1"><strong>Duration:</strong> ${calculateDuration(data.check_in, data.check_out)}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Parking Spot</h6>
+                    <p class="mb-1"><strong>Spot:</strong> ${data.spot?.spot_number || 'N/A'} ${data.spot?.parking_lot ? `(${data.spot.parking_lot.name})` : ''}</p>
+                    <p class="mb-1"><strong>Address:</strong> ${data.spot?.parking_lot?.address || 'Not specified'}</p>
+                    <p class="mb-1"><strong>Pincode:</strong> ${data.spot?.parking_lot?.pincode || 'Not specified'}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Payment</h6>
+                    <p class="mb-1"><strong>Amount:</strong> $${data.amount ? parseFloat(data.amount).toFixed(2) : '0.00'}</p>
+                    <p class="mb-1"><strong>Payment Method:</strong> ${data.payment_method ? formatPaymentMethod(data.payment_method) : 'Not specified'}</p>
+                    <p class="mb-1"><strong>Payment Status:</strong> ${data.payment_status || 'Not paid'}</p>
+                </div>
+            </div>`;
+    })
+    .catch(error => {
+        console.error('Error loading reservation details:', error);
+        modalContent.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Error:</strong> Failed to load reservation details.
+                <div class="mt-2 small">${error.message || 'Please try again later.'}</div>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">
+                        <i class="fas fa-sync-alt me-1"></i> Reload Page
+                    </button>
+                </div>
+            </div>`;
+    });
+}
+
+// Helper functions
+function getStatusBadgeClass(status) {
+    if (!status) return 'bg-secondary';
+    
+    const classes = {
+        'active': 'bg-success',
+        'completed': 'bg-primary',
+        'cancelled': 'bg-secondary',
+        'pending': 'bg-warning',
+        'confirmed': 'bg-info'
+    };
+    return classes[status.toLowerCase()] || 'bg-secondary';
+}
+
+function calculateDuration(start, end) {
+    if (!start) return 'N/A';
+    
+    try {
+        const startDate = new Date(start);
+        const endDate = end ? new Date(end) : new Date();
+        
+        // Check if dates are valid
+        if (isNaN(startDate.getTime())) return 'Invalid date';
+        if (end && isNaN(endDate.getTime())) return 'Invalid end date';
+        
+        const diffMs = endDate - startDate;
+        if (diffMs < 0) return 'Invalid duration';
+        
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHrs = Math.floor(diffMins / 60);
+        const days = Math.floor(diffHrs / 24);
+        const hours = diffHrs % 24;
+        const mins = diffMins % 60;
+        
+        let result = [];
+        if (days > 0) result.push(`${days} day${days !== 1 ? 's' : ''}`);
+        if (hours > 0) result.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
+        if (mins > 0 && days === 0) result.push(`${mins} min${mins !== 1 ? 's' : ''}`);
+        
+        return result.length > 0 ? result.join(' ') : 'Less than a minute';
+    } catch (error) {
+        console.error('Error calculating duration:', error);
+        return 'Error calculating duration';
+    }
+}
+
+function formatPaymentMethod(method) {
+    if (!method) return 'Not specified';
+    
+    const methods = {
+        'credit_card': 'Credit Card',
+        'debit_card': 'Debit Card',
+        'upi': 'UPI',
+        'net_banking': 'Net Banking',
+        'wallet': 'Wallet'
+    };
+    
+    return methods[method.toLowerCase()] || method;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Parking Lot - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h2 class="h5 mb-0">Edit Parking Lot: {{ lot.name }}</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.edit_parking_lot', lot_id=lot.id) }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Parking Lot Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ lot.name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="price_per_hour" class="form-label">Price per Hour ($) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="price_per_hour" name="price_per_hour" 
+                                           min="0" step="0.01" value="{{ '%.2f'|format(lot.price_per_hour) }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="address" name="address" value="{{ lot.address }}" required>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="pincode" class="form-label">Pin Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="pincode" name="pincode" value="{{ lot.pincode }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="max_spots" class="form-label">Total Number of Spots <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="max_spots" name="max_spots" 
+                                       min="1" value="{{ lot.max_spots }}" 
+                                       {% if lot.spots|selectattr('status', 'equalto', 'O')|list|length > 0 %}disabled
+                                       title="Cannot reduce spots below the number of occupied spots ({{ lot.spots|selectattr('status', 'equalto', 'O')|list|length }} occupied)"{% endif %}>
+                                <div class="form-text">
+                                    {% set occupied_spots = lot.spots|selectattr('status', 'equalto', 'O')|list|length %}
+                                    {{ occupied_spots }} spot(s) currently occupied
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> You cannot reduce the number of spots below the number of currently occupied spots.
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('admin.parking_lots') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="mt-4">
+                        <h5 class="mb-3">Parking Spots</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Spot Number</th>
+                                        <th>Status</th>
+                                        <th>Last Used</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for spot in lot.spots|sort(attribute='spot_number') %}
+                                    <tr>
+                                        <td>{{ spot.spot_number }}</td>
+                                        <td>
+                                            <span class="badge {% if spot.status == 'A' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ 'Available' if spot.status == 'A' else 'Occupied' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% set last_reservation = spot.reservations|sort(attribute='check_in', reverse=true)|first %}
+                                            {% if last_reservation %}
+                                                {{ last_reservation.check_in.strftime('%Y-%m-%d %H:%M') }}
+                                            {% else %}
+                                                Never used
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

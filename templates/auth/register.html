@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Parking Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0 min-vh-100">
+    <div class="row g-0 min-vh-100">
+        <!-- Left Side - Image -->
+        <div class="col-lg-6 d-none d-lg-block">
+            <div class="position-relative h-100">
+                <div class="position-absolute top-0 start-0 w-100 h-100 bg-primary" style="opacity: 0.1;"></div>
+                <div class="position-relative d-flex align-items-center justify-content-center h-100 p-5">
+                    <div class="text-center">
+                        <h1 class="display-4 fw-bold text-primary mb-4">Parking Management</h1>
+                        <p class="lead text-muted">Find and reserve parking spots with ease</p>
+                        <img src="{{ url_for('static', filename='img/parking-illustration.svg') }}" 
+                             alt="Parking Illustration" class="img-fluid mt-5" style="max-width: 400px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Form -->
+        <div class="col-lg-6 d-flex align-items-center">
+            <div class="p-5 w-100">
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold mb-1">Create an Account</h2>
+                    <p class="text-muted">Join us today and start managing your parking</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.register') }}" class="needs-validation" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    
+                    <!-- Full Name -->
+                    <div class="mb-4">
+                        <label for="full_name" class="form-label fw-medium">Full Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" class="form-control form-control-lg" id="full_name" 
+                                   name="full_name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="invalid-feedback">
+                            Please enter your full name.
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-4">
+                        <label for="email" class="form-label fw-medium">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control form-control-lg" id="email" 
+                                   name="email" placeholder="Enter your email" required>
+                        </div>
+                        <div class="invalid-feedback">
+                            Please provide a valid email address.
+                        </div>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="mb-4">
+                        <label for="phone" class="form-label fw-medium">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                            <input type="tel" class="form-control form-control-lg" id="phone" 
+                                   name="phone" placeholder="Enter your phone number" required>
+                        </div>
+                        <div class="invalid-feedback">
+                            Please enter a valid phone number.
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="mb-4">
+                        <label for="username" class="form-label fw-medium">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-at"></i></span>
+                            <input type="text" class="form-control form-control-lg" id="username" 
+                                   name="username" placeholder="Choose a username" required>
+                        </div>
+                        <div class="invalid-feedback">
+                            Please choose a username.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-medium">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" class="form-control form-control-lg" id="password" 
+                                   name="password" placeholder="••••••••" required>
+                            <button class="btn btn-outline-secondary toggle-password" type="button" 
+                                    data-target="#password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback">
+                            Please enter a password.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label fw-medium">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
+                            <input type="password" class="form-control form-control-lg" id="confirm_password" 
+                                   name="confirm_password" placeholder="Confirm your password" required>
+                            <button class="btn btn-outline-secondary toggle-password" type="button" 
+                                    data-target="#confirm_password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback" id="confirm-password-feedback">
+                            Passwords must match.
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                        <label class="form-check-label" for="terms">
+                            I agree to the <a href="#" class="text-primary">Terms of Service</a> and 
+                            <a href="#" class="text-primary">Privacy Policy</a>
+                        </label>
+                        <div class="invalid-feedback">
+                            You must agree to the terms and conditions.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                        Create Account
+                    </button>
+
+                    <div class="text-center mt-4">
+                        <p class="mb-0 text-muted">Already have an account? 
+                            <a href="{{ url_for('auth.login') }}" class="text-primary fw-medium">Sign In</a>
+                        </p>
+                    </div>
+                </form>
+
+                <div class="text-center mt-5 pt-4 border-top">
+                    <p class="small text-muted mb-0">© 2025 Parking Management System. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.toggle-password {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.toggle-password:hover {
+    background-color: #f8f9fa;
+}
+
+.form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.invalid-feedback {
+    display: none;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.was-validated .form-control:invalid ~ .invalid-tooltip,
+.form-control.is-invalid ~ .invalid-feedback,
+.form-control.is-invalid ~ .invalid-tooltip {
+    display: block;
+}
+</style>
+
+<script>
+// Form validation
+(function () {
+    'use strict'
+    
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    var forms = document.querySelectorAll('.needs-validation')
+    
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
+// Toggle password visibility
+document.querySelectorAll('.toggle-password').forEach(button => {
+    button.addEventListener('click', function() {
+        const target = document.querySelector(this.getAttribute('data-target'));
+        const type = target.getAttribute('type') === 'password' ? 'text' : 'password';
+        target.setAttribute('type', type);
+        this.querySelector('i').classList.toggle('fa-eye');
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+});
+
+// Password confirmation validation
+const password = document.getElementById('password');
+const confirm_password = document.getElementById('confirm_password');
+const confirmPasswordFeedback = document.getElementById('confirm-password-feedback');
+
+function validatePassword() {
+    if (password.value !== confirm_password.value) {
+        confirm_password.setCustomValidity("Passwords don't match");
+        confirmPasswordFeedback.style.display = 'block';
+        confirm_password.classList.add('is-invalid');
+    } else {
+        confirm_password.setCustomValidity('');
+        confirmPasswordFeedback.style.display = 'none';
+        confirm_password.classList.remove('is-invalid');
+    }
+}
+
+password.addEventListener('input', validatePassword);
+confirm_password.addEventListener('input', validatePassword);
+</script>
+{% endblock %}

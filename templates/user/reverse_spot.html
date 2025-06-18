@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Reverse Parking Spot - Parking Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card
+                <div class="card-header">
+                    <h4 class="mb-0">Reverse Parking Spot</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5>Spot Details</h5>
+                        <p class="mb-1"><strong>Spot Number:</strong> {{ spot.spot_number }}</p>
+                        <p class="mb-1"><strong>Parking Lot:</strong> {{ spot.parking_lot.name }}</p>
+                        <p class="mb-0"><strong>Check-in Time:</strong> {{ reservation.check_in.strftime('%Y-%m-%d %H:%M') }}</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <form method="POST" action="{{ url_for('user.reverse_spot', reservation_id=reservation.id) }}" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.vehicle_registration.label(class="form-label") }}
+                            {{ form.vehicle_registration(class="form-control" + (' is-invalid' if form.vehicle_registration.errors else ''), placeholder="Enter vehicle registration number") }}
+                            {% if form.vehicle_registration.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.vehicle_registration.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.drivers_license.label(class="form-label") }}
+                            {{ form.drivers_license(class="form-control" + (' is-invalid' if form.drivers_license.errors else ''), placeholder="Enter driver's license number") }}
+                            {% if form.drivers_license.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.drivers_license.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.reason.label(class="form-label") }}
+                            {{ form.reason(class="form-select" + (' is-invalid' if form.reason.errors else '')) }}
+                            {% if form.reason.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.reason.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control" + (' is-invalid' if form.notes.errors else ''), rows="3", placeholder="Any additional notes or comments") }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.notes.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('user.my_reservations') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-undo me-1"></i> Confirm Reversal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Enable form validation
+(function () {
+    'use strict'
+    
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    var forms = document.querySelectorAll('.needs-validation')
+    
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                
+                form.classList.add('was-validated')
+            }, false)
+        })
+})()
+</script>
+{% endblock %}

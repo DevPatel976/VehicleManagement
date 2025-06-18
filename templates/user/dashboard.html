@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - Parking Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Dashboard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Overview</li>
+    </ol>
+    
+    <!-- Welcome Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-primary">
+                <h4 class="alert-heading">Welcome back, {{ current_user.full_name or current_user.username }}!</h4>
+                <p>Here's what's happening with your parking reservations today.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Active Reservations</h6>
+                            <h2 class="mt-2">{{ active_reservations|length }}</h2>
+                        </div>
+                        <i class="fas fa-calendar-check fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ url_for('user.my_reservations') }}">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Available Lots</h6>
+                            <h2 class="mt-2">{{ available_lots }}</h2>
+                        </div>
+                        <i class="fas fa-parking fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ url_for('user.reserve_spot') }}">Find Parking</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Total Spots</h6>
+                            <h2 class="mt-2">{{ total_spots }}</h2>
+                        </div>
+                        <i class="fas fa-car fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ url_for('user.reserve_spot') }}">View All</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Total Reservations</h6>
+                            <h2 class="mt-2">{{ reservations|length }}</h2>
+                        </div>
+                        <i class="fas fa-list fa-2x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ url_for('user.my_reservations') }}">View All</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Reservations -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Active Reservations
+                </div>
+                <div class="card-body">
+                    {% if active_reservations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Parking Lot</th>
+                                        <th>Spot</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reservation in active_reservations %}
+                                        <tr>
+                                            <td>{{ reservation.spot.parking_lot.name }}</td>
+                                            <td>#{{ reservation.spot.spot_number }}</td>
+                                            <td>{{ reservation.check_in.strftime('%b %d, %Y %I:%M %p') }}</td>
+                                            <td>{{ reservation.check_out.strftime('%b %d, %Y %I:%M %p') if reservation.check_out else 'Not checked out' }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if reservation.status == 'active' else 'warning' if reservation.status == 'pending' else 'danger' }}">
+                                                    {{ reservation.status|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if reservation.status == 'active' %}
+                                                    <form action="{{ url_for('user.release_spot', reservation_id=reservation.id) }}" method="POST" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                                onclick="return confirm('Are you sure you want to check out?')">
+                                                            <i class="fas fa-sign-out-alt"></i> Check Out
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-parking fa-4x text-muted mb-3"></i>
+                            <h5>No Active Reservations</h5>
+                            <p class="text-muted">You don't have any active reservations at the moment.</p>
+                            <a href="{{ url_for('user.reserve_spot') }}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle"></i> Make a Reservation
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-history me-1"></i>
+                    Recent Activity
+                </div>
+                <div class="card-body">
+                    {% if reservations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Parking Lot</th>
+                                        <th>Spot</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reservation in reservations %}
+                                        <tr>
+                                            <td>{{ reservation.check_in.strftime('%b %d, %Y') }}</td>
+                                            <td>{{ reservation.spot.parking_lot.name }}</td>
+                                            <td>#{{ reservation.spot.spot_number }}</td>
+                                            <td>{{ reservation.check_in.strftime('%I:%M %p') }}</td>
+                                            <td>{{ reservation.check_out.strftime('%I:%M %p') if reservation.check_out else '-' }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if reservation.status == 'active' else 'warning' if reservation.status == 'pending' else 'secondary' }}">
+                                                    {{ reservation.status|title }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-4x text-muted mb-3"></i>
+                            <h5>No Recent Activity</h5>
+                            <p class="text-muted">Your reservation history will appear here.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bolt me-1"></i>
+                    Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('user.reserve_spot') }}" class="text-decoration-none">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                                        <h5>New Reservation</h5>
+                                        <p class="text-muted small">Book a new parking spot</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('user.my_reservations') }}" class="text-decoration-none">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <i class="fas fa-list fa-3x text-success mb-3"></i>
+                                        <h5>My Reservations</h5>
+                                        <p class="text-muted small">View all your bookings</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('user.profile') }}" class="text-decoration-none">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <i class="fas fa-user fa-3x text-info mb-3"></i>
+                                        <h5>My Profile</h5>
+                                        <p class="text-muted small">Update your information</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#helpModal">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <i class="fas fa-question-circle fa-3x text-warning mb-3"></i>
+                                        <h5>Help Center</h5>
+                                        <p class="text-muted small">Get assistance</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="helpModalLabel">Need Help?</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-question-circle text-primary me-2"></i>Frequently Asked Questions</h6>
+                        <div class="accordion" id="faqAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingOne">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                        How do I make a reservation?
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        To make a reservation, click on the "New Reservation" button, select your preferred parking lot and spot, choose your check-in and check-out times, and confirm your booking.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingTwo">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                        How do I check out of my parking spot?
+                                    </button>
+                                </h2>
+                                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        To check out, go to the "Active Reservations" section and click the "Check Out" button next to your reservation. Confirm the action when prompted.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingThree">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                        Can I cancel a reservation?
+                                    </button>
+                                </h2>
+                                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Yes, you can cancel a reservation from the "My Reservations" page as long as it hasn't started yet. Look for the cancel button next to your upcoming reservations.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-headset text-primary me-2"></i>Contact Support</h6>
+                        <p>If you need further assistance, our support team is here to help.</p>
+                        <div class="mb-3">
+                            <i class="fas fa-phone-alt text-primary me-2"></i>
+                            <strong>Phone:</strong> (555) 123-4567
+                        </div>
+                        <div class="mb-3">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <strong>Email:</strong> support@parkingapp.com
+                        </div>
+                        <div class="mb-3">
+                            <i class="fas fa-clock text-primary me-2"></i>
+                            <strong>Hours:</strong> 24/7 Support Available
+                        </div>
+                        <hr>
+                        <h6><i class="fas fa-comment-dots text-primary me-2"></i>Live Chat</h6>
+                        <p>Chat with our support team in real-time.</p>
+                        <button class="btn btn-primary w-100">
+                            <i class="fas fa-comments me-2"></i>Start Chat
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

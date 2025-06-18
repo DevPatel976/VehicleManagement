@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Reserve a Parking Spot - Parking Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Reserve a Spot</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Reserve a Parking Spot</h1>
+                <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="card">
+                <div class="card-body">
+                    {% if parking_lots %}
+                        <div class="row">
+                            {% for lot in parking_lots %}
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ lot.name }}</h5>
+                                            <p class="text-muted">{{ lot.address }}</p>
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-car"></i> {{ lot.available_spots }} spots available
+                                                </span>
+                                                <span class="text-primary fw-bold">
+                                                    ${{ "%.2f"|format(lot.price_per_hour) }}/hour
+                                                </span>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('user.reserve_spot') }}">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                                <input type="hidden" name="lot_id" value="{{ lot.id }}">
+                                                <button type="submit" class="btn btn-primary w-100" 
+                                                        {% if lot.available_spots == 0 %}disabled{% endif %}>
+                                                    <i class="fas fa-check-circle"></i> Reserve Now
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="fas fa-parking-slash fa-4x text-muted"></i>
+                            </div>
+                            <h4 class="text-muted">No Parking Lots Available</h4>
+                            <p class="text-muted">There are currently no parking lots with available spots.</p>
+                            <a href="{{ url_for('user.dashboard') }}" class="btn btn-primary mt-3">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-info-circle text-primary"></i> How It Works</h5>
+                    <ol class="mb-0">
+                        <li>Select a parking lot from the available options</li>
+                        <li>Click "Reserve Now" to book your spot</li>
+                        <li>Check in at the parking lot using your reservation</li>
+                        <li>Your reservation will be active until you check out</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
