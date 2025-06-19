@@ -230,101 +230,77 @@ def release_spot(reservation_id):
         'amount': amount,
         'price_per_hour': spot.parking_lot.price_per_hour
     }
-    if is_ajax:
-        return jsonify(template_vars)
+    
     return render_template('user/release_spot.html', **template_vars)
+
 @user_bp.route('/reservations')
 @login_required
 def my_reservations():
     from sqlalchemy.orm import joinedload
-    reservations = Reservation.query.options(
+    from sqlalchemy import or_
+    
+    search_query = request.args.get('search', '').strip()
+    
+  
+    query = Reservation.query.options(
         joinedload(Reservation.spot).joinedload(ParkingSpot.parking_lot)
     ).filter_by(
         user_id=current_user.id
-    ).order_by(Reservation.check_in.desc()).all()
+    )
+    
+   
+    if search_query:
+        query = query.join(ParkingSpot).join(ParkingLot).filter(
+            or_(
+                Reservation.id.like(f'%{search_query}%'),
+                ParkingLot.name.ilike(f'%{search_query}%'),
+                ParkingSpot.spot_number.ilike(f'%{search_query}%'),
+                Reservation.status.ilike(f'%{search_query}%')
+            )
+        )
+    
+  
+    reservations = query.order_by(Reservation.check_in.desc()).all()
+    
+   
     for reservation in reservations:
         if reservation.check_out and reservation.check_in:
             duration = reservation.check_out - reservation.check_in
             reservation.duration_minutes = int(duration.total_seconds() / 60)
         else:
             reservation.duration_minutes = 0
-    return render_template('user/my_reservations.html', reservations=reservations)
+            
+    return render_template('user/my_reservations.html', 
+                         reservations=reservations, 
+                         search_query=search_query)
 @user_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
     if request.method == 'POST':
         form_type = request.form.get('form_type')
-        if form_type == 'password_change':
-            current_password = request.form.get('current_password')
-            new_password = request.form.get('new_password')
-            confirm_password = request.form.get('confirm_password')
-            if new_password != confirm_password:
-                flash('New passwords do not match!', 'danger')
-                return redirect(url_for('user.profile'))
-            if not current_user.check_password(current_password):
-                flash('Current password is incorrect!', 'danger')
-                return redirect(url_for('user.profile'))
-            current_user.set_password(new_password)
-            db.session.commit()
-            flash('Password updated successfully!', 'success')
-        elif form_type == 'profile_update':
+        
+        if form_type == 'profile_update':
             current_user.full_name = request.form.get('full_name', current_user.full_name)
             current_user.email = request.form.get('email', current_user.email)
             current_user.phone = request.form.get('phone', current_user.phone)
             current_user.username = request.form.get('username', current_user.username)
-            new_password = request.form.get('password')
+            
+            new_password = request.form.get('new_password')
             if new_password:
                 confirm_password = request.form.get('confirm_password')
                 if new_password == confirm_password:
                     current_user.set_password(new_password)
+                    flash('Password updated successfully!', 'success')
                 else:
                     flash('New passwords do not match!', 'danger')
-                    return redirect(url_for('user.dashboard'))
+                    return redirect(url_for('user.profile'))
+            
             db.session.commit()
             flash('Profile updated successfully!', 'success')
-            return redirect(url_for('user.dashboard'))
-        return redirect(url_for('user.profile'))
+            return redirect(url_for('user.profile'))
+    
     return render_template('user/profile.html')
-@user_bp.route('/api/reservation-stats')
-def reservation_stats():
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    total_reservations = Reservation.query.filter(
-        Reservation.user_id == current_user.id,
-        Reservation.check_in >= thirty_days_ago
-    ).count()
-    reservations = Reservation.query.filter(
-        Reservation.user_id == current_user.id,
-        Reservation.check_in >= thirty_days_ago,
-        Reservation.check_out.isnot(None)
-    ).all()
-    total_hours = sum(
-        (res.check_out - res.check_in).total_seconds() / 3600
-        for res in reservations
-    )
-    total_spent = sum((res.amount or 0) for res in reservations)
-    weekly_data = []
-    for i in range(4):  
-        week_start = datetime.utcnow() - timedelta(weeks=4-i)
-        week_end = week_start + timedelta(weeks=1)
-        week_reservations = Reservation.query.filter(
-            Reservation.user_id == current_user.id,
-            Reservation.check_in >= week_start,
-            Reservation.check_in < week_end
-        ).all()
-        weekly_data.append({
-            'week': f"Week {4-i}",
-            'reservations': len(week_reservations),
-            'hours': sum(
-                ((res.check_out or datetime.utcnow()) - res.check_in).total_seconds() / 3600
-                for res in week_reservations
-            )
-        })
-    return jsonify({
-        'total_reservations': total_reservations,
-        'total_hours': round(total_hours, 2),
-        'total_spent': round(total_spent, 2),
-        'weekly_data': weekly_data
-    })
+
 @user_bp.route('/delete-account', methods=['POST'])
 @login_required
 def delete_account():

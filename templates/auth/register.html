@@ -5,7 +5,6 @@
 {% block content %}
 <div class="container-fluid p-0 min-vh-100">
     <div class="row g-0 min-vh-100">
-        <!-- Left Side - Image -->
         <div class="col-lg-6 d-none d-lg-block">
             <div class="position-relative h-100">
                 <div class="position-absolute top-0 start-0 w-100 h-100 bg-primary" style="opacity: 0.1;"></div>
@@ -20,7 +19,6 @@
             </div>
         </div>
 
-        <!-- Right Side - Form -->
         <div class="col-lg-6 d-flex align-items-center">
             <div class="p-5 w-100">
                 <div class="text-center mb-5">
@@ -31,7 +29,6 @@
                 <form method="POST" action="{{ url_for('auth.register') }}" class="needs-validation" novalidate>
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     
-                    <!-- Full Name -->
                     <div class="mb-4">
                         <label for="full_name" class="form-label fw-medium">Full Name</label>
                         <div class="input-group">
@@ -44,7 +41,6 @@
                         </div>
                     </div>
 
-                    <!-- Email -->
                     <div class="mb-4">
                         <label for="email" class="form-label fw-medium">Email Address</label>
                         <div class="input-group">
@@ -57,7 +53,6 @@
                         </div>
                     </div>
 
-                    <!-- Phone -->
                     <div class="mb-4">
                         <label for="phone" class="form-label fw-medium">Phone Number</label>
                         <div class="input-group">
@@ -70,7 +65,6 @@
                         </div>
                     </div>
 
-                    <!-- Username -->
                     <div class="mb-4">
                         <label for="username" class="form-label fw-medium">Username</label>
                         <div class="input-group">
@@ -176,14 +170,11 @@
 </style>
 
 <script>
-// Form validation
 (function () {
     'use strict'
     
-    // Fetch all the forms we want to apply custom Bootstrap validation styles to
     var forms = document.querySelectorAll('.needs-validation')
     
-    // Loop over them and prevent submission
     Array.prototype.slice.call(forms).forEach(function (form) {
         form.addEventListener('submit', function (event) {
             if (!form.checkValidity()) {
@@ -195,7 +186,6 @@
     })
 })()
 
-// Toggle password visibility
 document.querySelectorAll('.toggle-password').forEach(button => {
     button.addEventListener('click', function() {
         const target = document.querySelector(this.getAttribute('data-target'));
@@ -206,7 +196,6 @@ document.querySelectorAll('.toggle-password').forEach(button => {
     });
 });
 
-// Password confirmation validation
 const password = document.getElementById('password');
 const confirm_password = document.getElementById('confirm_password');
 const confirmPasswordFeedback = document.getElementById('confirm-password-feedback');

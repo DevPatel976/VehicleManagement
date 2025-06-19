@@ -154,15 +154,39 @@ def reservations():
     page = request.args.get('page', 1, type=int)
     per_page = 10
     query = Reservation.query
+    
+  
+    search = request.args.get('search', '').strip()
+    if search:
+        try:
+           
+            reservation_id = int(search)
+            query = query.filter(Reservation.id == reservation_id)
+        except ValueError:
+            
+            from sqlalchemy import or_
+            query = query.join(User).join(ParkingSpot).filter(
+                or_(
+                    User.username.ilike(f'%{search}%'),
+                    User.full_name.ilike(f'%{search}%'),
+                    ParkingSpot.spot_number.ilike(f'%{search}%')
+                )
+            )
+    
+    # Apply filters
     status = request.args.get('status')
     if status in ['active', 'completed', 'cancelled', 'reversed']:
         query = query.filter(Reservation.status == status)
+        
     user_id = request.args.get('user_id', type=int)
     if user_id:
         query = query.filter(Reservation.user_id == user_id)
+        
     parking_lot_id = request.args.get('parking_lot_id', type=int)
     if parking_lot_id:
         query = query.join(ParkingSpot).filter(ParkingSpot.parking_lot_id == parking_lot_id)
+        
+    # Date range filters
     date_from = request.args.get('date_from')
     if date_from:
         try:
@@ -170,6 +194,7 @@ def reservations():
             query = query.filter(Reservation.check_in >= date_from)
         except ValueError:
             pass
+            
     date_to = request.args.get('date_to')
     if date_to:
         try:
@@ -178,6 +203,7 @@ def reservations():
             query = query.filter(Reservation.check_in <= date_to)
         except ValueError:
             pass
+            
     sort_by = request.args.get('sort_by', 'check_in')
     sort_order = request.args.get('sort_order', 'desc')
     if sort_by == 'user':

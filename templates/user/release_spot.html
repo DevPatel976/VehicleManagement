@@ -33,7 +33,7 @@
                     <form method="POST" action="{{ url_for('user.release_spot', reservation_id=reservation.id) }}" class="needs-validation" novalidate>
                         {{ form.hidden_tag() }}
                         <input type="hidden" name="_method" value="POST">
-                        <!-- Debug Info -->
+                        
                         <div class="alert alert-info d-none" id="debug-info">
                             <h5>Debug Information:</h5>
                             <pre id="debug-output"></pre>
@@ -89,7 +89,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- Card Payment Fields -->
+                        
                         <div id="card-payment-fields" class="payment-method-fields" style="display: none;">
                             <div class="row">
                                 <div class="col-12 mb-3">
@@ -144,7 +144,7 @@
                             </div>
                         </div>
 
-                        <!-- UPI Payment Fields -->
+                        
                         <div id="upi-payment-fields" class="payment-method-fields" style="display: none;">
                             <div class="mb-3">
                                 {{ form.upi_id.label(class="form-label") }}
@@ -172,7 +172,7 @@
                             </button>
                         </div>
                         
-                        <!-- Hidden submit button for form submission -->
+
                         <button type="submit" id="hidden-submit" style="display: none;"></button>
                     </form>
                 </div>
@@ -185,7 +185,6 @@
 {% block scripts %}
 {{ super() }}
 <script>
-// Payment method toggle and form handling
 document.addEventListener('DOMContentLoaded', function() {
     const paymentMethod = document.getElementById('{{ form.payment_method.id }}');
     const cardFields = document.getElementById('card-payment-fields');
@@ -193,389 +192,125 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form.needs-validation');
     const submitButton = document.getElementById('submit-button');
     const debugDiv = document.getElementById('debug-info');
-    const debugOutput = document.getElementById('debug-output');
     
     if (debugDiv) debugDiv.classList.remove('d-none');
     
-    // Function to update required attributes based on payment method
     function updateRequiredFields(method) {
-        // Reset all payment fields to not required first
-        const paymentFields = document.querySelectorAll('[data-payment-method]');
-        if (paymentFields) {
-            paymentFields.forEach(field => {
-                field.required = false;
-            });
-        }
-        
-        // Set required fields based on payment method
-        if (method === 'credit_card' || method === 'debit_card') {
-            if (cardFields) {
-                cardFields.querySelectorAll('input, select').forEach(field => {
-                    field.required = true;
-                });
-            }
-        } else if (method === 'upi') {
-            if (upiFields) {
-                upiFields.querySelectorAll('input, select').forEach(field => {
-                    field.required = true;
-                });
-            }
-        }
-    }
-    
-    // Function to toggle payment method fields
-    function togglePaymentFields() {
-        if (!paymentMethod) return;
-        
-        const method = paymentMethod.value;
-        
-        // Hide all fields first
-        if (cardFields) cardFields.style.display = 'none';
-        if (upiFields) upiFields.style.display = 'none';
-        
-        // Show relevant fields
-        if (method === 'credit_card' || method === 'debit_card') {
-            if (cardFields) cardFields.style.display = 'block';
-        } else if (method === 'upi') {
-            if (upiFields) upiFields.style.display = 'block';
-        }
-        
-        // Update required fields
-        updateRequiredFields(method);
-    }
-    
-    // Initial setup
-    if (paymentMethod) {
-        togglePaymentFields();
-        paymentMethod.addEventListener('change', togglePaymentFields);
-    }
-    
-    // Form submission handler
-    if (form && submitButton) {
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            
-            // Update required fields based on current payment method
-            if (paymentMethod) {
-                updateRequiredFields(paymentMethod.value);
-            }
-            
-            // Check form validity
-            if (!form.checkValidity()) {
-                event.stopPropagation();
-                form.classList.add('was-validated');
-                return false;
-            }
-            
-            // Get form data for debugging
-            const formData = new FormData(form);
-            const formDataObj = {};
-            for (let [key, value] of formData.entries()) {
-                formDataObj[key] = value;
-            }
-            
-            // Log form data
-            console.log('Form data being submitted:', formDataObj);
-            if (debugOutput) {
-                debugOutput.textContent = JSON.stringify(formDataObj, null, 2);
-            }
-            
-            // If we get here, form is valid
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
-            
-            try {
-                console.log('Sending request to:', form.action);
-                
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    },
-                    credentials: 'same-origin'
-                });
-                
-                console.log('Response status:', response.status);
-                
-                try {
-                    const data = await response.json();
-                    console.log('Response data:', data);
-                    
-                    if (response.ok && data.success) {
-                        console.log('Form submission successful, redirecting...');
-                        alert('Payment successful! Thank you for your payment.');
-                        window.location.href = data.redirect || '{{ url_for("user.dashboard") }}';
-                    } else {
-                        const errorMsg = data.error || 'Payment processing failed';
-                        console.error('Server error:', errorMsg);
-                        throw new Error(errorMsg);
-                    }
-                } catch (jsonError) {
-                    console.error('Error parsing JSON response:', jsonError);
-                    const responseText = await response.text();
-                    console.error('Response text:', responseText);
-                    throw new Error('Invalid response from server');
-                }
-            } catch (error) {
-                console.error('Error during form submission:', error);
-                alert('An error occurred: ' + (error.message || 'Please try again.'));
-            } finally {
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonText;
-            }
-        });
-    }
-});
-
-// Payment method toggle and form handling
-document.addEventListener('DOMContentLoaded', function() {
-    const paymentMethod = document.getElementById('{{ form.payment_method.id }}');
-    const cardFields = document.getElementById('card-payment-fields');
-    const upiFields = document.getElementById('upi-payment-fields');
-    const form = document.querySelector('form.needs-validation');
-    
-    // Function to update required attributes based on payment method
-    function updateRequiredFields(method) {
-        // Reset all payment fields to not required first
         const paymentFields = document.querySelectorAll('[data-payment-method]');
         paymentFields.forEach(field => {
             field.required = false;
+            field.setAttribute('aria-required', 'false');
+            field.removeAttribute('required');
         });
         
-        // Set required fields based on payment method
         if (method === 'credit_card' || method === 'debit_card') {
             if (cardFields) {
                 cardFields.querySelectorAll('input, select').forEach(field => {
                     field.required = true;
+                    field.setAttribute('aria-required', 'true');
                 });
             }
         } else if (method === 'upi') {
             if (upiFields) {
                 upiFields.querySelectorAll('input, select').forEach(field => {
                     field.required = true;
+                    field.setAttribute('aria-required', 'true');
                 });
             }
         }
-        // No fields are required for net_banking or wallet
     }
     
-    // Function to toggle payment method fields
     function togglePaymentFields() {
         if (!paymentMethod) return;
         
         const method = paymentMethod.value;
         
-        // Hide all fields first
         if (cardFields) cardFields.style.display = 'none';
         if (upiFields) upiFields.style.display = 'none';
         
-        // Show relevant fields
         if (method === 'credit_card' || method === 'debit_card') {
             if (cardFields) cardFields.style.display = 'block';
         } else if (method === 'upi') {
             if (upiFields) upiFields.style.display = 'block';
         }
         
-        // Update required fields
         updateRequiredFields(method);
     }
     
-    // Initial setup
+    // Initialize the payment fields
     togglePaymentFields();
     
-    // Add event listener for payment method changes
     if (paymentMethod) {
         paymentMethod.addEventListener('change', togglePaymentFields);
     }
-    
-    // Update form submission to handle all payment methods
-    if (form) {
-        const submitButton = document.getElementById('submit-button');
-        if (submitButton) {
-            form.addEventListener('submit', async function(event) {
-                event.preventDefault();
-                
-                // Update required fields based on current payment method
-                updateRequiredFields(paymentMethod.value);
-                
-                // Check form validity
-                if (!form.checkValidity()) {
-                    event.stopPropagation();
-                    form.classList.add('was-validated');
-                    return false;
-                }
-                
-                // If we get here, form is valid
-                const originalButtonText = submitButton.innerHTML;
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
-                
-                try {
-                    const formData = new FormData(form);
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (response.ok && data.success) {
-                        alert('Payment successful! Thank you for your payment.');
-                        window.location.href = data.redirect || '{{ url_for("user.dashboard") }}';
-                    } else {
-                        throw new Error(data.error || 'Payment processing failed');
-                    }
-                } catch (error) {
-                    console.error('Error during form submission:', error);
-                    alert('An error occurred: ' + (error.message || 'Please try again.'));
-                } finally {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-            });
-        }
-    }
-            if (!section) return;
-            section.style.display = 'none';
-            section.querySelectorAll('input, select').forEach(field => {
-                field.required = false;
-                field.setAttribute('aria-required', 'false');
-                field.removeAttribute('required');
-            });
-        });
-        
-        // Clear any existing validation messages
-        document.querySelectorAll('.invalid-feedback').forEach(el => {
-            el.textContent = '';
-        });
-        document.querySelectorAll('.is-invalid').forEach(el => {
-            el.classList.remove('is-invalid');
-        });
-        
-        // Show relevant fields and set required attributes based on payment method
-        if (selectedMethod === 'credit_card' || selectedMethod === 'debit_card') {
-            if (cardFields) {
-                cardFields.style.display = 'block';
-                cardFields.querySelectorAll('input, select').forEach(field => {
-                    field.required = true;
-                    field.setAttribute('aria-required', 'true');
-                });
-            }
-        } else if (selectedMethod === 'upi') {
-            if (upiFields) {
-                upiFields.style.display = 'block';
-                upiFields.querySelectorAll('input, select').forEach(field => {
-                    field.required = true;
-                    field.setAttribute('aria-required', 'true');
-                });
-            }
-        } else if (selectedMethod === 'net_banking' || selectedMethod === 'wallet') {
-            // No additional fields needed for these methods
-        }
-        
-        // Trigger a validation check
-        if (form) {
-            form.classList.add('was-validated');
-        }
-    }
-    
-    // Initial call to set correct fields on page load
-    togglePaymentFields();
-    
-    // Add event listener for payment method changes
-    const paymentMethod = document.getElementById('{{ form.payment_method.id }}');
-    if (paymentMethod) {
-        paymentMethod.addEventListener('change', togglePaymentFields);
-    }
-    
-    // Form validation and submission
-    const form = document.querySelector('form.needs-validation');
-    const submitButton = document.getElementById('submit-button');
     
     if (form && submitButton) {
-        // Handle form submission
         form.addEventListener('submit', async function(event) {
-            // Prevent default form submission
             event.preventDefault();
             event.stopPropagation();
             
-            // Update required fields based on current payment method
-            togglePaymentFields();
+            updateRequiredFields(paymentMethod ? paymentMethod.value : '');
             
-            // Check form validity
-            const isValid = form.checkValidity();
-            form.classList.add('was-validated');
-            
-            if (isValid) {
-                // Disable submit button to prevent double submission
-                const originalButtonText = submitButton.innerHTML;
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
+            if (!form.checkValidity()) {
+                event.stopPropagation();
+                form.classList.add('was-validated');
                 
-                try {
-                    // Submit the form data
-                    const formData = new FormData(form);
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    const data = await response.json();
-                    
-                    if (response.ok && data.success) {
-                        // Show success message
-                        alert('Payment successful! Thank you for your payment.');
-                        // Redirect to dashboard
-                        window.location.href = data.redirect || '{{ url_for("user.dashboard") }}';
-                    } else {
-                        // Handle form validation errors
-                        if (data.errors) {
-                            // Clear all previous error messages
-                            form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-                            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-                            
-                            // Show new error messages
-                            for (const [field, errors] of Object.entries(data.errors)) {
-                                const input = form.querySelector(`[name="${field}"]`);
-                                const feedback = input ? input.nextElementSibling : null;
-                                if (input && feedback && feedback.classList.contains('invalid-feedback')) {
-                                    input.classList.add('is-invalid');
-                                    feedback.textContent = errors[0];
-                                }
-                            }
-                            // Scroll to first error
-                            const firstError = form.querySelector('.is-invalid');
-                            if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                        throw new Error(data.error || 'Payment processing failed');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    if (!error.message.includes('Payment processing failed')) {
-                        alert('An error occurred while processing your payment. Please try again.');
-                    }
-                } finally {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-            } else {
                 // Scroll to first invalid field
                 const firstInvalid = form.querySelector(':invalid');
                 if (firstInvalid) {
                     firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     firstInvalid.focus();
                 }
+                return false;
+            }
+            
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    alert('Payment successful! Thank you for your payment.');
+                    window.location.href = data.redirect || '{{ url_for("user.dashboard") }}';
+                } else {
+                    if (data.errors) {
+                        form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+                        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                        
+                        for (const [field, errors] of Object.entries(data.errors)) {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            const feedback = input ? input.nextElementSibling : null;
+                            if (input && feedback && feedback.classList.contains('invalid-feedback')) {
+                                input.classList.add('is-invalid');
+                                feedback.textContent = errors[0];
+                            }
+                        }
+                        
+                        const firstError = form.querySelector('.is-invalid');
+                        if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    throw new Error(data.error || 'Payment processing failed');
+                }
+            } catch (error) {
+                console.error('Error during form submission:', error);
+                if (!error.message.includes('Payment processing failed')) {
+                    alert('An error occurred: ' + (error.message || 'Please try again.'));
+                }
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
             }
         });
     }

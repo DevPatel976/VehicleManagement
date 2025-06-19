@@ -102,7 +102,6 @@
     </div>
 </div>
 
-<!-- Delete Account Modal -->
 <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -135,12 +134,12 @@
 
 {% block extra_js %}
 <script>
-    // Enable delete button only when checkbox is checked
+    
     document.getElementById('confirmDelete').addEventListener('change', function() {
         document.getElementById('deleteAccountBtn').disabled = !this.checked;
     });
     
-    // Form validation
+    
     const form = document.querySelector('form');
     if (form) {
         form.addEventListener('submit', function(event) {

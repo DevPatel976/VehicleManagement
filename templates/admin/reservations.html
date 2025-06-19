@@ -16,22 +16,29 @@
             </div>
 
             <div class="card-body">
-                <div class="row mb-3 align-items-center">
-                    <div class="col-md-6">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                            <input type="text" class="form-control form-control-sm" placeholder="Search reservations...">
+                <form method="get" action="{{ url_for('admin.reservations') }}" class="mb-3">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                                <input type="text" 
+                                       class="form-control form-control-sm" 
+                                       name="search" 
+                                       placeholder="Search by ID, username, name, or spot number..." 
+                                       value="{{ request.args.get('search', '') }}"
+                                       aria-label="Search reservations">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i> Search
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-end gap-2">
-                            <select class="form-select form-select-sm w-auto" style="max-width: 150px;">
-                                <option>All Status</option>
-                                <option>Active</option>
-                                <option>Completed</option>
-                                <option>Cancelled</option>
-                            </select>
-                            <div class="dropdown-menu dropdown-menu-end p-3" style="width: 250px;">
+                        <div class="col-md-4">
+                            <div class="d-flex justify-content-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        {% if filters.status %}{{ filters.status|title }}{% else %}All Status{% endif %}
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end p-3" style="width: 250px;">
                                 <form id="filterForm" method="get" action="{{ url_for('admin.reservations') }}">
                                     <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                     <div class="mb-3">
@@ -77,7 +84,6 @@
                     </div>
                 </div>
 
-                <!-- Reservations Table -->
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
@@ -165,7 +171,6 @@
                 </table>
             </div>
             
-                <!-- Pagination -->
                 {% if reservations.pages > 1 %}
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <div class="text-muted">
@@ -183,7 +188,9 @@
                             <ul class="pagination mb-0">
                                 {% if reservations.has_prev %}
                                     <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('admin.reservations', page=reservations.prev_num, **request.args) }}" aria-label="Previous">
+                                        {% set args = request.args.copy() %}
+                                        {% set _ = args.pop('page', None) %}
+                                        <a class="page-link" href="{{ url_for('admin.reservations', page=reservations.prev_num, **args) }}" aria-label="Previous">
                                             <i class="fas fa-chevron-left"></i>
                                         </a>
                                     </li>
@@ -197,21 +204,21 @@
                                 
                                 {% for page_num in reservations.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
                                     {% if page_num %}
+                                        {% set args = request.args.copy() %}
+                                        {% set _ = args.pop('page', None) %}
                                         <li class="page-item {% if page_num == reservations.page %}active{% endif %}">
-                                            <a class="page-link" href="{{ url_for('admin.reservations', page=page_num, **request.args) }}">
-                                                {{ page_num }}
-                                            </a>
+                                            <a class="page-link" href="{{ url_for('admin.reservations', page=page_num, **args) }}">{{ page_num }}</a>
                                         </li>
                                     {% else %}
-                                        <li class="page-item disabled">
-                                            <span class="page-link">...</span>
-                                        </li>
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
                                     {% endif %}
                                 {% endfor %}
                                 
                                 {% if reservations.has_next %}
                                     <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('admin.reservations', page=reservations.next_num, **request.args) }}" aria-label="Next">
+                                        {% set args = request.args.copy() %}
+                                        {% set _ = args.pop('page', None) %}
+                                        <a class="page-link" href="{{ url_for('admin.reservations', page=reservations.next_num, **args) }}" aria-label="Next">
                                             <i class="fas fa-chevron-right"></i>
                                         </a>
                                     </li>
@@ -231,7 +238,7 @@
     </div>
 </div>
 
-<!-- Add Reservation Modal -->
+
 <div class="modal fade" id="addReservationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -296,7 +303,6 @@
     </div>
 </div>
 
-<!-- View Reservation Modal -->
 <div class="modal fade" id="viewReservationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -362,7 +368,6 @@
     </div>
 </div>
 
-<!-- Cancel Reservation Modal -->
 <div class="modal fade" id="cancelReservationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -388,7 +393,6 @@
     </div>
 </div>
 
-<!-- Delete Reservation Modal -->
 <div class="modal fade" id="deleteReservationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -416,7 +420,7 @@
 
 {% block extra_js %}
 <script>
-// Handle filter form submission
+        
 document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('statusFilter');
     if (statusFilter) {
@@ -427,31 +431,25 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-// Initialize tooltips
 var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl);
 });
 
-// Handle view reservation modal
+
 var viewReservationModal = document.getElementById('viewReservationModal');
 if (viewReservationModal) {
     viewReservationModal.addEventListener('show.bs.modal', function (event) {
         var button = event.relatedTarget;
         var reservationId = button.getAttribute('data-reservation-id');
         
-        // Here you would typically fetch the reservation details via AJAX
-        // For now, we'll just set some example data
         var modalTitle = viewReservationModal.querySelector('.modal-title');
         modalTitle.textContent = 'Reservation #' + reservationId;
         
-        // Update modal content with reservation details
         document.getElementById('reservationId').textContent = '#' + reservationId;
-        // ... set other fields ...
     });
 }
 
-// Handle cancel reservation modal
 var cancelReservationModal = document.getElementById('cancelReservationModal');
 if (cancelReservationModal) {
     cancelReservationModal.addEventListener('show.bs.modal', function (event) {
@@ -462,7 +460,6 @@ if (cancelReservationModal) {
     });
 }
 
-// Handle delete reservation modal
 var deleteReservationModal = document.getElementById('deleteReservationModal');
 if (deleteReservationModal) {
     deleteReservationModal.addEventListener('show.bs.modal', function (event) {

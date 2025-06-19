@@ -73,7 +73,6 @@
                                         <i class="fas fa-ban"></i> Block
                                     </button>
                                     
-                                    <!-- Block User Modal -->
                                     <div class="modal fade" id="blockUserModal{{ user.id }}" tabindex="-1" 
                                          aria-labelledby="blockUserModalLabel{{ user.id }}" aria-hidden="true">
                                         <div class="modal-dialog">
@@ -145,7 +144,6 @@
     </div>
 </div>
 
-<!-- User Details Modal -->
 <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -205,7 +203,6 @@
                                 </tr>
                             </thead>
                             <tbody id="userReservationsTable">
-                                <!-- Filled by JavaScript -->
                             </tbody>
                         </table>
                     </div>
@@ -218,7 +215,6 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -245,7 +241,6 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
     const searchInput = document.getElementById('userSearch');
     const tableBody = document.getElementById('userTableBody');
     
@@ -265,19 +260,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // View user details
     const viewButtons = document.querySelectorAll('.view-user');
     viewButtons.forEach(button => {
         button.addEventListener('click', function() {
             const userId = this.getAttribute('data-user-id');
-            // In a real app, you would fetch user details via AJAX
-            // For now, we'll just show the modal with placeholder data
             document.getElementById('modalUsername').textContent = this.parentNode.parentNode.cells[1].textContent;
             document.getElementById('modalUserEmail').textContent = this.parentNode.parentNode.cells[2].textContent;
         });
     });
     
-    // Delete user confirmation
     const deleteButtons = document.querySelectorAll('.delete-user');
     const deleteUserForm = document.getElementById('deleteUserForm');
     const deleteUserName = document.getElementById('deleteUserName');
@@ -290,13 +281,12 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteUserName.textContent = username;
             deleteUserForm.action = `/admin/users/${userId}/delete`;
             
-            // Show the modal
             const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
             modal.show();
         });
     });
     
-    // Initialize tooltips
+
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);

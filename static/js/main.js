@@ -1,19 +1,15 @@
-// Main JavaScript for Parking Management System
+
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Initialize popovers
     const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
-
-    // Auto-dismiss alerts after 5 seconds
     const alerts = document.querySelectorAll('.alert-dismissible');
     alerts.forEach(alert => {
         setTimeout(() => {
@@ -22,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
 
-    // Handle form submissions with confirmation
     const confirmForms = document.querySelectorAll('form[data-confirm]');
     confirmForms.forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -34,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Add active class to current nav link
     const currentLocation = location.href;
     const menuItems = document.querySelectorAll('.nav-link');
     menuItems.forEach(item => {
@@ -44,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialize datepickers
     const datepickers = document.querySelectorAll('.datepicker');
     if (datepickers.length > 0) {
         datepickers.forEach(input => {
@@ -56,9 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Handle dynamic form fields
     document.addEventListener('click', function(e) {
-        // Add more fields
         if (e.target.matches('.add-field')) {
             e.preventDefault();
             const container = e.target.closest('.dynamic-fields');
@@ -70,7 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
             container.dataset.count = parseInt(container.dataset.count) + 1;
         }
 
-        // Remove fields
         if (e.target.matches('.remove-field')) {
             e.preventDefault();
             const field = e.target.closest('.dynamic-field');
@@ -80,7 +70,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle AJAX form submissions
     const ajaxForms = document.querySelectorAll('form[data-ajax]');
     ajaxForms.forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -89,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const submitBtn = form.querySelector('[type="submit"]');
             const originalText = submitBtn.innerHTML;
             
-            // Disable submit button and show loading state
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
             
@@ -102,7 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // Handle success response
                 if (data.redirect) {
                     window.location.href = data.redirect;
                 } else if (data.message) {
@@ -114,7 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showAlert('An error occurred. Please try again.', 'danger');
             })
             .finally(() => {
-                // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             });
@@ -122,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Show alert message
 function showAlert(message, type = 'info') {
     const alert = document.createElement('div');
     alert.className = `alert alert-${type} alert-dismissible fade show`;
@@ -135,14 +120,12 @@ function showAlert(message, type = 'info') {
     const container = document.querySelector('.alerts-container') || document.body;
     container.prepend(alert);
     
-    // Auto-dismiss after 5 seconds
     setTimeout(() => {
         const bsAlert = new bootstrap.Alert(alert);
         bsAlert.close();
     }, 5000);
 }
 
-// Toggle password visibility
 togglePasswordVisibility = (inputId, toggleId) => {
     const passwordInput = document.getElementById(inputId);
     const toggleIcon = document.getElementById(toggleId);

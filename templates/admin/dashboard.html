@@ -28,7 +28,7 @@
 <div class="container-fluid">
     <h1 class="mb-4">Admin Dashboard</h1>
     
-    <!-- Stats Cards -->
+
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
             <div class="card bg-primary text-white h-100 stat-card">
@@ -84,7 +84,6 @@
         </div>
     </div>
 
-    <!-- Charts Row -->
     <div class="row mb-4">
         <div class="col-md-8">
             <div class="card shadow-sm h-100">
@@ -112,7 +111,6 @@
         </div>
     </div>
 
-    <!-- Recent Reservations -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Recent Reservations</h5>
@@ -156,7 +154,6 @@
         </div>
     </div>
 
-    <!-- Parking Lots Overview -->
     <div class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Parking Lots</h5>
@@ -204,13 +201,10 @@
 
 {% block extra_js %}
 <script>
-// Wait for the document to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Fetch data from the API
     fetch('/admin/api/stats')
         .then(response => response.json())
         .then(data => {
-            // Parking Lot Utilization Chart
             const ctx1 = document.getElementById('utilizationChart').getContext('2d');
             new Chart(ctx1, {
                 type: 'bar',
@@ -263,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Revenue Chart
             const ctx2 = document.getElementById('revenueChart').getContext('2d');
             new Chart(ctx2, {
                 type: 'line',

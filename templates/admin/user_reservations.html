@@ -79,7 +79,6 @@
         </div>
     </div>
 
-    <!-- Reservation Details Modal -->
     <div class="modal fade" id="reservationDetailsModal" tabindex="-1" aria-labelledby="reservationDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -88,7 +87,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="reservationDetailsContent">
-                    <!-- Content will be loaded via AJAX -->
                     <div class="text-center my-5">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -107,24 +105,20 @@
 
 {% block extra_js %}
 <script>
-// Wait for the document to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM fully loaded - initializing...');
     
     try {
-        // Check if Bootstrap is available
         if (typeof bootstrap === 'undefined') {
             throw new Error('Bootstrap JS is not loaded');
         }
         
-        // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
         console.log('Tooltips initialized');
 
-        // Initialize the modal
         const modalElement = document.getElementById('reservationDetailsModal');
         if (!modalElement) {
             throw new Error('Modal element not found');
@@ -133,7 +127,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const reservationModal = new bootstrap.Modal(modalElement);
         console.log('Modal initialized');
         
-        // Handle view details button clicks using event delegation
         document.addEventListener('click', function(e) {
             const button = e.target.closest('.view-details');
             if (!button) return;
@@ -159,7 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Function to show error message in the UI
 function showError(message) {
     const alertDiv = document.createElement('div');
     alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3';
@@ -172,14 +164,13 @@ function showError(message) {
     `;
     document.body.appendChild(alertDiv);
     
-    // Auto-dismiss after 5 seconds
+ 
     setTimeout(() => {
         const bsAlert = new bootstrap.Alert(alertDiv);
         bsAlert.close();
     }, 5000);
 }
 
-// Function to load reservation details via AJAX
 function loadReservationDetails(reservationId, modalInstance) {
     const modalContent = document.getElementById('reservationDetailsContent');
     
@@ -188,7 +179,6 @@ function loadReservationDetails(reservationId, modalInstance) {
         return;
     }
     
-    // Show loading state
     modalContent.innerHTML = `
         <div class="text-center my-5">
             <div class="spinner-border text-primary" role="status">
@@ -197,12 +187,10 @@ function loadReservationDetails(reservationId, modalInstance) {
             <p class="mt-2">Loading reservation details...</p>
         </div>`;
     
-    // Show the modal
     modalInstance.show();
     
     console.log('Fetching reservation details for ID:', reservationId);
     
-    // Add cache-busting parameter and ensure correct admin prefix
     const url = `/admin/api/reservations/${reservationId}?_=${Date.now()}`;
     console.log('Fetching from URL:', url);
     
@@ -228,7 +216,6 @@ function loadReservationDetails(reservationId, modalInstance) {
             throw new Error('No data received from server');
         }
         
-        // Format and display the reservation details
         modalContent.innerHTML = `
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -280,7 +267,6 @@ function loadReservationDetails(reservationId, modalInstance) {
     });
 }
 
-// Helper functions
 function getStatusBadgeClass(status) {
     if (!status) return 'bg-secondary';
     
@@ -301,7 +287,6 @@ function calculateDuration(start, end) {
         const startDate = new Date(start);
         const endDate = end ? new Date(end) : new Date();
         
-        // Check if dates are valid
         if (isNaN(startDate.getTime())) return 'Invalid date';
         if (end && isNaN(endDate.getTime())) return 'Invalid end date';
         
