@@ -115,12 +115,19 @@ def create_app():
     return app
 def init_db(app, check_admin=True):
     with app.app_context():
-        db.create_all()
-        if check_admin:
-            try:
+        try:
+            db.create_all()
+            print("Database tables created successfully")
+            
+            if check_admin:
                 from models.user import User
+                print("Checking for admin user...")
+                
+                # Check if admin user exists
                 admin = User.query.filter_by(username='admin').first()
+                
                 if not admin:
+                    print("Admin user not found, creating one...")
                     admin = User(
                         username='admin',
                         email='admin@parking.com',
@@ -131,11 +138,22 @@ def init_db(app, check_admin=True):
                     admin.set_password('admin123')
                     db.session.add(admin)
                     db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                print(f"Skipping admin creation due to: {str(e)}")
-            db.session.commit()
-            print("Created admin user")
+                    print("Admin user created successfully")
+                else:
+                    print("Admin user already exists")
+                    
+                    # Ensure admin has admin privileges (in case they were removed)
+                    if not admin.is_admin:
+                        print("Upgrading user to admin...")
+                        admin.is_admin = True
+                        db.session.commit()
+                        print("User upgraded to admin")
+                        
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error initializing database: {str(e)}")
+            import traceback
+            traceback.print_exc()
 app = create_app()
 init_db(app, check_admin=False)
 if __name__ == '__main__':
