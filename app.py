@@ -39,7 +39,11 @@ def setup_config(app):
     def inject_timezone():
         return {'local_tz': app.timezone}
 def create_app():
-    app = Flask(__name__, instance_path='D:\\IIT - Data\\IITM - 5th Q - May 2025\\MAD 1 - Project\\Mayur\\parking_app_24f1000027\\instance')
+    # Use a relative path for the instance folder
+    import os
+    instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
+    os.makedirs(instance_path, exist_ok=True)
+    app = Flask(__name__, instance_path=instance_path)
     setup_config(app)
 
 
