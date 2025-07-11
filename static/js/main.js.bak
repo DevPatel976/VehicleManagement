@@ -1,67 +1,32 @@
 
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Initialize all popovers
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
-    
-    // Initialize all dropdowns using Bootstrap 5 syntax
-    var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
-    var dropdownList = dropdownElementList.map(function(dropdownToggleEl) {
-        return new bootstrap.Dropdown(dropdownToggleEl);
-    });
-    
-    // Ensure proper dropdown positioning in tables
-    document.addEventListener('shown.bs.dropdown', function(e) {
-        // Get the dropdown menu
-        const dropdown = e.target.querySelector('.dropdown-menu');
-        if (!dropdown) return;
-        
-        // Check if dropdown is in a table cell
-        const cell = e.target.closest('td');
-        if (!cell) return;
-        
-        // Fix possible overflow issues
-        const tableRect = cell.closest('.table-responsive')?.getBoundingClientRect();
-        const dropdownRect = dropdown.getBoundingClientRect();
-        
-        if (tableRect) {
-            // Ensure dropdown stays within table bounds
-            if (dropdownRect.right > tableRect.right) {
-                dropdown.classList.add('dropdown-menu-end');
-            }
-            
-            if (dropdownRect.bottom > window.innerHeight) {
-                dropdown.style.transform = `translateY(-${dropdownRect.height}px)`;
-            }
-        }
-    });
-
-    // Handle form confirmation dialogs
-    const confirmForms = document.querySelectorAll('form[data-confirm]');
-    confirmForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            if (!confirm(this.getAttribute('data-confirm'))) {
-                e.preventDefault();
-            }
-        });
-    });
-
-    // Auto-dismiss alerts after 5 seconds
-    const alerts = document.querySelectorAll('.alert');
+    const alerts = document.querySelectorAll('.alert-dismissible');
     alerts.forEach(alert => {
         setTimeout(() => {
             const bsAlert = new bootstrap.Alert(alert);
             bsAlert.close();
         }, 5000);
+    });
+
+    const confirmForms = document.querySelectorAll('form[data-confirm]');
+    confirmForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            if (!confirm(this.getAttribute('data-confirm'))) {
+                e.preventDefault();
+                return false;
+            }
+            return true;
+        });
     });
 
     const currentLocation = location.href;
@@ -167,10 +132,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitBtn.innerHTML = originalText;
                 }
             });
-        }});
+        });
     });
+});
 
-// Function to show alert messages
 function showAlert(message, type = 'info') {
     const alert = document.createElement('div');
     alert.className = `alert alert-${type} alert-dismissible fade show`;

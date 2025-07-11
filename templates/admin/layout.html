@@ -17,6 +17,11 @@
     .sidebar {
         background: #ffffff;
         border-right: 1px solid #e3e6f0;
+        position: fixed;
+        top: 70px;
+        height: calc(100vh - 70px);
+        overflow-y: auto;
+        z-index: 1000;
     }
     
     .sidebar .nav-item .nav-link {
@@ -35,9 +40,56 @@
         color: #b7b9cc;
     }
     
+    /* Ensure main content has proper left margin for the fixed sidebar */
+    main.col-md-9 {
+        margin-left: 16.66667% !important;
+        padding-left: 2rem !important;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            position: relative !important;
+            top: auto !important;
+            height: auto !important;
+        }
+        main.col-md-9 {
+            margin-left: 0 !important;
+        }
+    }
+    
     .navbar {
-        background: #fff !important;
+        background: #4e73df !important;
         box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        position: fixed;
+        width: 100%;
+        top: 0;
+        margin-top: 0 !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        z-index: 1030;
+    }
+    
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    
+    body {
+        padding-top: 56px; /* Reduced from 70px to match navbar height */
+    }
+    
+    /* Override the base template's main container margin for admin pages */
+    main.container {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 1rem !important;
+    }
+    
+    /* Also remove the mt-3 from the flash message container for admin pages */
+    .container.mt-3 {
+        margin-top: 0 !important;
+        padding-top: 0.5rem !important;
     }
     
     .card {
@@ -87,7 +139,8 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse"
+             style="position: fixed; top: 70px; height: calc(100vh - 70px); z-index: 1000;">
             <div class="position-sticky pt-3">
                 <ul class="nav flex-column">
                     <li class="nav-item">
@@ -118,7 +171,7 @@
             </div>
         </nav>
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" style="margin-left: 16.66667%; margin-top: 0;">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h3">{% block page_title %}{% endblock %}</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
@@ -153,101 +206,19 @@
         </main>
     </div>
 </div>
-
-
-        <hr class="sidebar-divider d-none d-md-block">
-
-        <div class="text-center d-none d-md-inline">
-            <button class="rounded-circle border-0" id="sidebarToggle"></button>
-        </div>
-    </ul>
-
-    <div id="content-wrapper" class="d-flex flex-column">
-        <div id="content">
-            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                    <i class="fa fa-bars"></i>
-                </button>
-
-                <ul class="navbar-nav ml-auto">
-                    <div class="topbar-divider d-none d-sm-block"></div>
-
-                    <li class="nav-item dropdown no-arrow">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ current_user.username }}</span>
-                            <i class="fas fa-user-circle fa-fw"></i>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                            aria-labelledby="userDropdown">
-                            <a class="dropdown-item" href="{{ url_for('user.profile') }}">
-                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Profile
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
-                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Logout
-                            </a>
-                        </div>
-                    </li>
-                </ul>
-            </nav>
-
-            <div class="container-fluid">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                            </div>
-        </div>
-        <footer class="sticky-footer bg-white">
-            <div class="container my-auto">
-                <div class="copyright text-center my-auto">
-                    <span>Copyright &copy; Parking Management System {{ now.year }}</span>
-                </div>
-            </div>
-        </footer>
-    </div>
-</div>
-
-<a class="scroll-to-top rounded" href="#page-top">
-    <i class="fas fa-angle-up"></i>
-</a>
-
-<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
-                </button>
-            </div>
-            <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                <a class="btn btn-primary" href="{{ url_for('auth.logout') }}">Logout</a>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Load jQuery -->
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Ensure Bootstrap is loaded -->
+<script src="{{ url_for('static', filename='js/bootstrap-loader.js') }}"></script>
+
+<!-- DataTables -->
 <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
 
+<!-- Custom scripts in proper order -->
+<script src="{{ url_for('static', filename='js/dropdown-fix.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 {% endblock %}

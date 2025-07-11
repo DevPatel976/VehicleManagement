@@ -116,8 +116,8 @@
                                         <tr>
                                             <td>{{ reservation.spot.parking_lot.name }}</td>
                                             <td>#{{ reservation.spot.spot_number }}</td>
-                                            <td>{{ reservation.check_in.strftime('%b %d, %Y %I:%M %p') }}</td>
-                                            <td>{{ reservation.check_out.strftime('%b %d, %Y %I:%M %p') if reservation.check_out else 'Not checked out' }}</td>
+                                            <td>{{ reservation.check_in|localtime('%b %d, %Y %I:%M %p') }}</td>
+                                            <td>{{ reservation.check_out|localtime('%b %d, %Y %I:%M %p') if reservation.check_out else 'Not checked out' }}</td>
                                             <td>
                                                 <span class="badge bg-{{ 'success' if reservation.status == 'active' else 'warning' if reservation.status == 'pending' else 'danger' }}">
                                                     {{ reservation.status|title }}
@@ -170,19 +170,19 @@
                                         <th>Date</th>
                                         <th>Parking Lot</th>
                                         <th>Spot</th>
-                                        <th>Check-in</th>
-                                        <th>Check-out</th>
+                                        <th>Check-in <small class="text-muted">(IST)</small></th>
+                                        <th>Check-out <small class="text-muted">(IST)</small></th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for reservation in reservations %}
                                         <tr>
-                                            <td>{{ reservation.check_in.strftime('%b %d, %Y') }}</td>
+                                            <td>{{ reservation.check_in|localtime('%b %d, %Y') }}</td>
                                             <td>{{ reservation.spot.parking_lot.name }}</td>
                                             <td>#{{ reservation.spot.spot_number }}</td>
-                                            <td>{{ reservation.check_in.strftime('%I:%M %p') }}</td>
-                                            <td>{{ reservation.check_out.strftime('%I:%M %p') if reservation.check_out else '-' }}</td>
+                                            <td>{{ reservation.check_in|localtime('%I:%M %p') }}</td>
+                                            <td>{{ reservation.check_out|localtime('%I:%M %p') if reservation.check_out else '-' }}</td>
                                             <td>
                                                 <span class="badge bg-{{ 'success' if reservation.status == 'active' else 'warning' if reservation.status == 'pending' else 'secondary' }}">
                                                     {{ reservation.status|title }}
@@ -320,22 +320,19 @@
                         <p>If you need further assistance, our support team is here to help.</p>
                         <div class="mb-3">
                             <i class="fas fa-phone-alt text-primary me-2"></i>
-                            <strong>Phone:</strong> (555) 123-4567
+                            <strong>Phone:</strong> +911212121212
                         </div>
                         <div class="mb-3">
                             <i class="fas fa-envelope text-primary me-2"></i>
-                            <strong>Email:</strong> support@parkingapp.com
+                            <strong>Email:</strong> admin@parking.com
                         </div>
                         <div class="mb-3">
                             <i class="fas fa-clock text-primary me-2"></i>
                             <strong>Hours:</strong> 24/7 Support Available
                         </div>
-                        <hr>
-                        <h6><i class="fas fa-comment-dots text-primary me-2"></i>Live Chat</h6>
-                        <p>Chat with our support team in real-time.</p>
-                        <button class="btn btn-primary w-100">
-                            <i class="fas fa-comments me-2"></i>Start Chat
-                        </button>
+
+
+                        
                     </div>
                 </div>
             </div>

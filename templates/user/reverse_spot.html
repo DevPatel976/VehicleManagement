@@ -15,7 +15,7 @@
                         <h5>Spot Details</h5>
                         <p class="mb-1"><strong>Spot Number:</strong> {{ spot.spot_number }}</p>
                         <p class="mb-1"><strong>Parking Lot:</strong> {{ spot.parking_lot.name }}</p>
-                        <p class="mb-0"><strong>Check-in Time:</strong> {{ reservation.check_in.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p class="mb-0"><strong>Check-in Time:</strong> {{ reservation.check_in|localtime('%Y-%m-%d %H:%M') }}</p>
                     </div>
                     
                     <hr>

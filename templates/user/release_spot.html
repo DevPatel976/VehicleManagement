@@ -20,7 +20,7 @@
                             <div class="col-md-6">
                                 <p class="mb-2"><strong>Spot Number:</strong> {{ spot.spot_number }}</p>
                                 <p class="mb-2"><strong>Parking Lot:</strong> {{ spot.parking_lot.name }}</p>
-                                <p class="mb-2"><strong>Check-in Time:</strong> {{ reservation.check_in.strftime('%Y-%m-%d %I:%M %p') }}</p>
+                                <p class="mb-2"><strong>Check-in Time:</strong> {{ reservation.check_in|localtime('%Y-%m-%d %I:%M %p') }}</p>
                             </div>
                             <div class="col-md-6">
                                 <p class="mb-2"><strong>Duration:</strong> {{ "%0.2f"|format(duration) }} hours</p>

@@ -37,26 +37,85 @@
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Full Name:</div>
+                        <div class="col-md-8">{{ current_user.full_name or 'Not specified' }}</div>
+                    </div>
+                    <div class="row mb-3">
                         <div class="col-md-4 fw-bold">Username:</div>
                         <div class="col-md-8">{{ current_user.username }}</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-4 fw-bold">Email:</div>
-                        <div class="col-md-8">{{ current_user.email }}</div>
+                        <div class="col-md-8">
+                            {{ current_user.email }}
+                            {% if current_user.is_email_verified %}
+                                <span class="badge bg-success ms-2">Verified</span>
+                            {% else %}
+                                <span class="badge bg-warning ms-2">Not Verified</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Phone:</div>
+                        <div class="col-md-8">{{ current_user.phone or 'Not provided' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Account Status:</div>
+                        <div class="col-md-8">
+                            {% if current_user.is_blocked %}
+                                <span class="badge bg-danger">Blocked</span>
+                                {% if current_user.blocked_reason %}
+                                    <small class="text-muted">({{ current_user.blocked_reason }})</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-success">Active</span>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4 fw-bold">Member Since:</div>
-                        <div class="col-md-8">{{ current_user.created_at.strftime('%B %d, %Y') }}</div>
+                        <div class="col-md-8">
+                            {{ current_user.created_at|localtime('%B %d, %Y') }}
+                            <small class="text-muted">({{ current_user.created_at|timesince }} ago)</small>
+                        </div>
                     </div>
                 </div>
             </div>
             
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('user.profile') }}" class="mb-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="form_type" value="profile_update">
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" 
+                                   value="{{ current_user.full_name or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ current_user.phone or '' }}" pattern="[0-9]{10,15}">
+                            <div class="form-text">Format: 10-15 digits, numbers only</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Change Password</h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('user.profile') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="form_type" value="password_change">
                         <div class="mb-3">
                             <label for="current_password" class="form-label">Current Password</label>
                             <input type="password" class="form-control" id="current_password" 
@@ -122,6 +181,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form action="{{ url_for('user.delete_account') }}" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <button type="submit" class="btn btn-danger" id="deleteAccountBtn" disabled>
                         <i class="fas fa-trash-alt"></i> Delete My Account
                     </button>
@@ -134,30 +194,74 @@
 
 {% block extra_js %}
 <script>
-    
-    document.getElementById('confirmDelete').addEventListener('change', function() {
-        document.getElementById('deleteAccountBtn').disabled = !this.checked;
+    // Enable/disable delete account button based on confirmation
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmDelete = document.getElementById('confirmDelete');
+        if (confirmDelete) {
+            confirmDelete.addEventListener('change', function() {
+                const deleteBtn = document.getElementById('deleteAccountBtn');
+                if (deleteBtn) {
+                    deleteBtn.disabled = !this.checked;
+                }
+            });
+        }
+
+        // Form validation for password change
+        const passwordForm = document.querySelector('form[action="{{ url_for("user.profile") }}"]');
+        if (passwordForm) {
+            passwordForm.addEventListener('submit', function(event) {
+                const formType = this.querySelector('input[name="form_type"]');
+                
+                // Only validate password change form
+                if (formType && formType.value === 'password_change') {
+                    const currentPassword = document.getElementById('current_password');
+                    const newPassword = document.getElementById('new_password');
+                    const confirmPassword = document.getElementById('confirm_password');
+                    
+                    if (!currentPassword.value) {
+                        event.preventDefault();
+                        showAlert('Please enter your current password.', 'danger');
+                        return false;
+                    }
+                    
+                    if (newPassword.value !== confirmPassword.value) {
+                        event.preventDefault();
+                        showAlert('New passwords do not match!', 'danger');
+                        return false;
+                    }
+                    
+                    if (newPassword.value.length < 6) {
+                        event.preventDefault();
+                        showAlert('Password must be at least 6 characters long.', 'danger');
+                        return false;
+                    }
+                }
+            });
+        }
     });
-    
-    
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(event) {
-            const newPassword = document.getElementById('new_password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            
-            if (newPassword !== confirmPassword) {
-                event.preventDefault();
-                alert('New passwords do not match!');
-                return false;
-            }
-            
-            if (newPassword.length < 6) {
-                event.preventDefault();
-                alert('Password must be at least 6 characters long.');
-                return false;
-            }
-        });
+
+    // Show alert function
+    function showAlert(message, type) {
+        // Remove any existing alerts
+        const existingAlert = document.querySelector('.alert-dismissible');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+        
+        // Create and show new alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Insert alert at the top of the content
+        const content = document.querySelector('.container');
+        if (content) {
+            content.insertBefore(alertDiv, content.firstChild);
+        }
     }
 </script>
 {% endblock %}

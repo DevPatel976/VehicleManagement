@@ -12,7 +12,7 @@ def view_database():
         print("="*50)
         for table in tables:
             table_name = table[0]
-            if table_name == 'alembic_version':  
+            if table_name == 'alembic_version':
                 continue
             print(f"\n{'='*30}")
             print(f"TABLE: {table_name}")

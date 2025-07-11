@@ -18,7 +18,7 @@ def generate_html(tables_data):
     for table_name, df in tables_data.items():
         if not df.empty:
             html += f
-    html += 
+    html +=
     return html
 def main():
     try:

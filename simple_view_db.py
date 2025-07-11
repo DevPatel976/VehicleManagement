@@ -18,7 +18,9 @@ def print_table(conn, table_name):
         print(f"Error reading table {table_name}: {str(e)}")
 def main():
     try:
-        conn = sqlite3.connect('instance/parking.db')
+        db_path = 'instance/parking.db'
+        print(f"Attempting to connect to database at: {db_path}")
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         tables = [table[0] for table in cursor.fetchall() if table[0] != 'alembic_version']

@@ -1,0 +1,25 @@
+/* Fix for navbar spacing */
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body {
+    padding-top: 56px !important; /* Only padding needed is for fixed navbar */
+}
+
+.navbar {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Fix for any extra white space */
+.container-fluid {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Ensure all content fills available space */
+.row {
+    margin-top: 0 !important;
+}

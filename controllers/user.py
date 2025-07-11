@@ -69,7 +69,7 @@ def reserve_spot():
                     'price_per_hour': lot.price_per_hour,
                     'address': lot.address
                 })
-        return render_template('user/reserve_spot.html', 
+        return render_template('user/reserve_spot.html',
                             parking_lots=parking_lots)
     if not request.form.get('csrf_token'):
         flash('Invalid form submission. CSRF token is missing.', 'danger')
@@ -132,7 +132,7 @@ def reverse_spot(reservation_id):
     if form.validate_on_submit():
         try:
             reservation.check_out = datetime.utcnow()
-            reservation.amount = 0  
+            reservation.amount = 0
             reservation.status = 'reversed'
             reservation.is_reversed = True
             reservation.reversed_at = datetime.utcnow()
@@ -147,8 +147,8 @@ def reverse_spot(reservation_id):
         except Exception as e:
             db.session.rollback()
             flash('An error occurred while processing your request. Please try again.', 'danger')
-    return render_template('user/reverse_spot.html', 
-                         form=form, 
+    return render_template('user/reverse_spot.html',
+                         form=form,
                          reservation=reservation,
                          spot=reservation.spot)
 @user_bp.route('/release/<int:reservation_id>', methods=['GET', 'POST'])
@@ -168,13 +168,13 @@ def release_spot(reservation_id):
             return jsonify({'error': 'This spot is already released!', 'redirect': url_for('user.dashboard')})
         flash('This spot is already released!', 'warning')
         return redirect(url_for('user.dashboard'))
-    duration = (datetime.utcnow() - reservation.check_in).total_seconds() / 3600  
+    duration = (datetime.utcnow() - reservation.check_in).total_seconds() / 3600
     amount = round(duration * spot.parking_lot.price_per_hour, 2)
     form = ReleaseSpotForm()
     if request.method == 'POST':
-        print(f"Form data: {request.form}")  
+        print(f"Form data: {request.form}")
         if form.validate_on_submit():
-            print("Form validated successfully")  
+            print("Form validated successfully")
             try:
                 reservation.check_out = datetime.utcnow()
                 reservation.amount = amount
@@ -198,7 +198,7 @@ def release_spot(reservation_id):
                     payment_info.update({
                         'upi_id': form.upi_id.data
                     })
-                print(f"Payment info: {payment_info}")  
+                print(f"Payment info: {payment_info}")
                 db.session.commit()
                 if is_ajax:
                     return jsonify({
@@ -211,12 +211,12 @@ def release_spot(reservation_id):
             except Exception as e:
                 db.session.rollback()
                 error_msg = 'An error occurred while processing your request. Please try again.'
-                print(f"Error processing release: {str(e)}")  
+                print(f"Error processing release: {str(e)}")
                 if is_ajax:
                     return jsonify({'error': error_msg}), 500
                 flash(error_msg, 'danger')
         else:
-            print(f"Form validation failed: {form.errors}")  
+            print(f"Form validation failed: {form.errors}")
             if is_ajax:
                 return jsonify({
                     'error': 'Please correct the errors in the form.',
@@ -230,7 +230,7 @@ def release_spot(reservation_id):
         'amount': amount,
         'price_per_hour': spot.parking_lot.price_per_hour
     }
-    
+
     return render_template('user/release_spot.html', **template_vars)
 
 @user_bp.route('/reservations')
@@ -238,17 +238,15 @@ def release_spot(reservation_id):
 def my_reservations():
     from sqlalchemy.orm import joinedload
     from sqlalchemy import or_
-    
+
     search_query = request.args.get('search', '').strip()
-    
-  
+
     query = Reservation.query.options(
         joinedload(Reservation.spot).joinedload(ParkingSpot.parking_lot)
     ).filter_by(
         user_id=current_user.id
     )
-    
-   
+
     if search_query:
         query = query.join(ParkingSpot).join(ParkingLot).filter(
             or_(
@@ -258,54 +256,125 @@ def my_reservations():
                 Reservation.status.ilike(f'%{search_query}%')
             )
         )
-    
-  
+
     reservations = query.order_by(Reservation.check_in.desc()).all()
-    
-   
+
     for reservation in reservations:
         if reservation.check_out and reservation.check_in:
             duration = reservation.check_out - reservation.check_in
             reservation.duration_minutes = int(duration.total_seconds() / 60)
         else:
             reservation.duration_minutes = 0
-            
-    return render_template('user/my_reservations.html', 
-                         reservations=reservations, 
+
+    return render_template('user/my_reservations.html',
+                         reservations=reservations,
                          search_query=search_query)
 @user_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    from models.user import User
+    from flask_wtf.csrf import validate_csrf
+
     if request.method == 'POST':
+
+        csrf_token = request.form.get('csrf_token')
+        if not csrf_token:
+            flash('Invalid form submission. CSRF token is missing.', 'danger')
+            return redirect(url_for('user.profile'))
+
+        try:
+            validate_csrf(csrf_token)
+        except Exception as e:
+            flash('Invalid form submission. Please try again.', 'danger')
+            return redirect(url_for('user.profile'))
+
         form_type = request.form.get('form_type')
-        
+
         if form_type == 'profile_update':
-            current_user.full_name = request.form.get('full_name', current_user.full_name)
-            current_user.email = request.form.get('email', current_user.email)
-            current_user.phone = request.form.get('phone', current_user.phone)
-            current_user.username = request.form.get('username', current_user.username)
-            
-            new_password = request.form.get('new_password')
-            if new_password:
+            try:
+
+                current_user.full_name = request.form.get('full_name', current_user.full_name)
+                current_user.phone = request.form.get('phone', '').strip() or None
+
+                new_email = request.form.get('email', '').strip().lower()
+                if new_email and new_email != current_user.email:
+
+                    if User.query.filter(User.email == new_email, User.id != current_user.id).first():
+                        flash('This email is already registered. Please use a different email.', 'danger')
+                        return redirect(url_for('user.profile'))
+                    current_user.email = new_email
+                    current_user.is_email_verified = False
+                    flash('Email updated. Please verify your new email address.', 'warning')
+
+                new_username = request.form.get('username', '').strip()
+                if new_username and new_username != current_user.username:
+
+                    if User.query.filter(User.username == new_username, User.id != current_user.id).first():
+                        flash('This username is already taken. Please choose another one.', 'danger')
+                        return redirect(url_for('user.profile'))
+                    current_user.username = new_username
+
+                db.session.commit()
+                flash('Profile updated successfully!', 'success')
+                return redirect(url_for('user.profile'))
+
+            except Exception as e:
+                db.session.rollback()
+                flash('An error occurred while updating your profile. Please try again.', 'danger')
+                return redirect(url_for('user.profile'))
+
+        elif form_type == 'password_change':
+            try:
+                current_password = request.form.get('current_password')
+                new_password = request.form.get('new_password')
                 confirm_password = request.form.get('confirm_password')
-                if new_password == confirm_password:
-                    current_user.set_password(new_password)
-                    flash('Password updated successfully!', 'success')
-                else:
+
+                if not current_user.check_password(current_password):
+                    flash('Current password is incorrect.', 'danger')
+                    return redirect(url_for('user.profile'))
+
+                if not new_password or len(new_password) < 6:
+                    flash('New password must be at least 6 characters long.', 'danger')
+                    return redirect(url_for('user.profile'))
+
+                if new_password != confirm_password:
                     flash('New passwords do not match!', 'danger')
                     return redirect(url_for('user.profile'))
-            
-            db.session.commit()
-            flash('Profile updated successfully!', 'success')
-            return redirect(url_for('user.profile'))
-    
-    return render_template('user/profile.html')
+
+                current_user.set_password(new_password)
+                db.session.commit()
+
+                flash('Password updated successfully!', 'success')
+                return redirect(url_for('user.profile'))
+
+            except Exception as e:
+                db.session.rollback()
+                flash('An error occurred while updating your password. Please try again.', 'danger')
+                return redirect(url_for('user.profile'))
+
+    return render_template('user/profile.html',
+                         active_tab=request.args.get('tab', 'profile'))
 
 @user_bp.route('/delete-account', methods=['POST'])
 @login_required
 def delete_account():
+    from flask_wtf.csrf import validate_csrf
+
+    csrf_token = request.form.get('csrf_token')
+    if not csrf_token:
+        flash('Invalid form submission. CSRF token is missing.', 'danger')
+        return redirect(url_for('user.profile'))
+
     try:
+        validate_csrf(csrf_token)
+    except Exception as e:
+        flash('Invalid form submission. Please try again.', 'danger')
+        return redirect(url_for('user.profile'))
+
+    try:
+
         Reservation.query.filter_by(user_id=current_user.id).delete()
+
         db.session.delete(current_user)
         db.session.commit()
         logout_user()

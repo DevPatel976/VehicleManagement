@@ -91,7 +91,7 @@
                                         <td>
                                             {% set last_reservation = spot.reservations|sort(attribute='check_in', reverse=true)|first %}
                                             {% if last_reservation %}
-                                                {{ last_reservation.check_in.strftime('%Y-%m-%d %H:%M') }}
+                                                {{ last_reservation.check_in|localtime('%Y-%m-%d %H:%M') }}
                                             {% else %}
                                                 Never used
                                             {% endif %}

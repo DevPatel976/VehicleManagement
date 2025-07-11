@@ -29,6 +29,7 @@
                             <th>Member Since</th>
                             <th>Reservations</th>
                             <th>Status</th>
+                            <th>Role</th>
                             <th>Actions</th>
                             <th>Block/Unblock</th>
                         </tr>
@@ -39,7 +40,7 @@
                             <td>#{{ user.id }}</td>
                             <td>{{ user.username }}</td>
                             <td>{{ user.email }}</td>
-                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ user.created_at|localtime('%Y-%m-%d') }}</td>
                             <td>{{ user.reservations|length }}</td>
                             <td>
                                 {% if user.is_blocked %}
@@ -50,34 +51,61 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ url_for('admin.user_reservations', user_id=user.id) }}" 
-                                   class="btn btn-sm btn-outline-info mb-1"
-                                   data-bs-toggle="tooltip"
-                                   title="View Full History">
-                                    <i class="fas fa-history"></i>
-                                </a>
+                                <form action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" method="POST" class="d-inline" data-ajax>
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                                    <button type="submit" class="btn btn-sm {% if user.is_admin %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+                                            title="{% if user.is_admin %}Remove Admin{% else %}Make Admin{% endif %}">
+                                        {% if user.is_admin %}
+                                            <i class="fas fa-user-shield"></i> Admin
+                                        {% else %}
+                                            <i class="fas fa-user"></i> User
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.user_reservations', user_id=user.id) }}" 
+                                       class="btn btn-sm btn-outline-info"
+                                       data-bs-toggle="tooltip"
+                                       title="View Full History">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                    {% if user.id != current_user.id %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger delete-user-btn"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteUserModal"
+                                            data-user-id="{{ user.id }}"
+                                            data-username="{{ user.username }}"
+                                            title="Delete User">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td>
                                 {% if user.is_blocked %}
-                                    <form action="{{ url_for('admin.unblock_user', user_id=user.id) }}" method="POST" class="d-inline">
+                                    <form action="{{ url_for('admin.unblock_user', user_id=user.id) }}" method="POST" class="d-inline" data-ajax>
                                         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                                        <input type="hidden" name="reason" value="">
                                         <button type="submit" class="btn btn-sm btn-success" 
                                                 title="Unblock User">
                                             <i class="fas fa-unlock"></i> Unblock
                                         </button>
                                     </form>
                                 {% else %}
-                                    <button type="button" class="btn btn-sm btn-warning" 
+                                    <button type="button" class="btn btn-sm btn-warning block-user-btn" 
                                             data-bs-toggle="modal" data-bs-target="#blockUserModal{{ user.id }}"
-                                            title="Block User">
+                                            title="Block User" data-user-id="{{ user.id }}">
                                         <i class="fas fa-ban"></i> Block
                                     </button>
                                     
                                     <div class="modal fade" id="blockUserModal{{ user.id }}" tabindex="-1" 
-                                         aria-labelledby="blockUserModalLabel{{ user.id }}" aria-hidden="true">
+                                         aria-labelledby="blockUserModalLabel{{ user.id }}" aria-hidden="true" data-user-id="{{ user.id }}">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
-                                                <form action="{{ url_for('admin.block_user', user_id=user.id) }}" method="POST">
+                                                <form action="{{ url_for('admin.block_user', user_id=user.id) }}" method="POST" data-ajax>
                                                     <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                                     <div class="modal-header">
                                                         <h5 class="modal-title" id="blockUserModalLabel{{ user.id }}">Block User</h5>
@@ -87,7 +115,7 @@
                                                         <p>Are you sure you want to block <strong>{{ user.username }}</strong>?</p>
                                                         <div class="mb-3">
                                                             <label for="reason{{ user.id }}" class="form-label">Reason (optional)</label>
-                                                            <textarea class="form-control" id="reason{{ user.id }}" name="reason" rows="3" 
+                                                            <textarea class="form-control reason-input" id="reason{{ user.id }}" name="reason" rows="3" 
                                                                       placeholder="Enter reason for blocking this user"></textarea>
                                                         </div>
                                                     </div>
@@ -100,21 +128,6 @@
                                         </div>
                                     </div>
                                 {% endif %}
-                                <button class="btn btn-sm btn-outline-primary view-user" 
-                                        data-user-id="{{ user.id }}" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#userDetailsModal"
-                                        data-bs-toggle="tooltip"
-                                        title="View Details">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger delete-user" 
-                                        data-user-id="{{ user.id }}"
-                                        data-username="{{ user.username }}"
-                                        data-bs-toggle="tooltip"
-                                        title="Delete User">
-                                    <i class="fas fa-trash"></i>
-                                </button>
                             </td>
                         </tr>
                         {% else %}
@@ -240,57 +253,118 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('userSearch');
-    const tableBody = document.getElementById('userTableBody');
-    
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const rows = tableBody.getElementsByTagName('tr');
-        
-        for (let row of rows) {
-            const username = row.cells[1].textContent.toLowerCase();
-            const email = row.cells[2].textContent.toLowerCase();
-            
-            if (username.includes(searchTerm) || email.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Handle delete user button click
+        var deleteUserModal = document.getElementById('deleteUserModal');
+        if (deleteUserModal) {
+            deleteUserModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var userId = button.getAttribute('data-user-id');
+                var username = button.getAttribute('data-username');
+                
+                // Update the modal content
+                var modalTitle = deleteUserModal.querySelector('.modal-title');
+                var modalBody = deleteUserModal.querySelector('.modal-body');
+                var deleteForm = deleteUserModal.querySelector('form');
+                
+                modalTitle.textContent = 'Confirm User Deletion';
+                modalBody.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        This action cannot be undone. All user data including reservations will be permanently deleted.
+                    </div>
+                    <p>Are you sure you want to delete user <strong>${username}</strong>?</p>
+                `;
+                
+                // Update form action URL
+                deleteForm.action = `/admin/users/${userId}/delete`;
+                
+                // Add CSRF token to the form
+                var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                var csrfInput = deleteForm.querySelector('input[name="_csrf_token"]');
+                if (!csrfInput) {
+                    csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf_token';
+                    deleteForm.appendChild(csrfInput);
+                }
+                csrfInput.value = csrfToken;
+            });
         }
     });
-    
-    const viewButtons = document.querySelectorAll('.view-user');
-    viewButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const userId = this.getAttribute('data-user-id');
-            document.getElementById('modalUsername').textContent = this.parentNode.parentNode.cells[1].textContent;
-            document.getElementById('modalUserEmail').textContent = this.parentNode.parentNode.cells[2].textContent;
-        });
-    });
-    
-    const deleteButtons = document.querySelectorAll('.delete-user');
-    const deleteUserForm = document.getElementById('deleteUserForm');
-    const deleteUserName = document.getElementById('deleteUserName');
-    
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const userId = this.getAttribute('data-user-id');
-            const username = this.getAttribute('data-username');
-            
-            deleteUserName.textContent = username;
-            deleteUserForm.action = `/admin/users/${userId}/delete`;
-            
-            const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-            modal.show();
-        });
-    });
-    
+</script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('userSearch');
+        const tableBody = document.getElementById('userTableBody');
+        
+        if (searchInput && tableBody) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = tableBody.getElementsByTagName('tr');
+                
+                for (let row of rows) {
+                    if (row.cells.length > 2) {  // Ensure row has enough cells
+                        const username = row.cells[1]?.textContent?.toLowerCase() || '';
+                        const email = row.cells[2]?.textContent?.toLowerCase() || '';
+                        
+                        if (username.includes(searchTerm) || email.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        }
+        
+        const viewButtons = document.querySelectorAll('.view-user');
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                if (row) {
+                    const usernameCell = row.cells[1];
+                    const emailCell = row.cells[2];
+                    if (usernameCell && emailCell) {
+                        document.getElementById('modalUsername').textContent = usernameCell.textContent;
+                        document.getElementById('modalUserEmail').textContent = emailCell.textContent;
+                    }
+                }
+            });
+        });
+        
+        const deleteButtons = document.querySelectorAll('.delete-user');
+        const deleteUserForm = document.getElementById('deleteUserForm');
+        const deleteUserName = document.getElementById('deleteUserName');
+        
+        if (deleteUserForm && deleteUserName) {
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const username = this.getAttribute('data-username');
+                    
+                    if (username) deleteUserName.textContent = username;
+                    if (userId) deleteUserForm.action = `/admin/users/${userId}/delete`;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+                    modal.show();
+                });
+            });
+        }
+        
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
     });
-});
 </script>
 {% endblock %}

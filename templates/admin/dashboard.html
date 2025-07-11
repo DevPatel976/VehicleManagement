@@ -135,7 +135,7 @@
                             <td>#{{ res.id }}</td>
                             <td>{{ res.user.username }}</td>
                             <td>{% if res.spot %}{{ res.spot.spot_number }}{% if res.spot.parking_lot %} ({{ res.spot.parking_lot.name }}){% endif %}{% else %}N/A{% endif %}</td>
-                            <td>{{ res.check_in.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ res.check_in|localtime('%Y-%m-%d %H:%M') }}</td>
                             <td>
                                 <span class="badge {% if res.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
                                     {{ res.status|title }}

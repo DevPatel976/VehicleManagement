@@ -2,6 +2,19 @@
 
 {% block title %}My Reservations - Parking Management System{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Debug: Ensure navigation is visible */
+.navbar {
+    background-color: #0d6efd !important;
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: 9999 !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row">
@@ -64,8 +77,8 @@
                                         <th>ID</th>
                                         <th>Parking Lot</th>
                                         <th>Spot</th>
-                                        <th>Check-in</th>
-                                        <th>Check-out</th>
+                                        <th>Check-in <small class="text-muted">(IST)</small></th>
+                                        <th>Check-out <small class="text-muted">(IST)</small></th>
                                         <th>Duration</th>
                                         <th>Amount</th>
                                         <th>Status</th>
@@ -78,10 +91,10 @@
                                             <td>#{{ reservation.id }}</td>
                                             <td>{% if reservation.spot and reservation.spot.parking_lot %}{{ reservation.spot.parking_lot.name }}{% else %}N/A{% endif %}</td>
                                             <td>{% if reservation.spot %}{{ reservation.spot.spot_number }}{% else %}N/A{% endif %}</td>
-                                            <td>{{ reservation.check_in.strftime('%Y-%m-%d %H:%M') }}</td>
+                                            <td>{{ reservation.check_in|localtime('%Y-%m-%d %H:%M') }}</td>
                                             <td>
                                                 {% if reservation.check_out %}
-                                                    {{ reservation.check_out.strftime('%Y-%m-%d %H:%M') }}
+                                                    {{ reservation.check_out|localtime('%Y-%m-%d %H:%M') }}
                                                 {% else %}
                                                     -
                                                 {% endif %}

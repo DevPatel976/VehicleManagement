@@ -5,9 +5,16 @@ body {
     color: #333;
 }
 
-
+/* Navigation styles */
 .navbar {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative !important;
+    z-index: 1000 !important;
+    display: block !important;
+    visibility: visible !important;
+    margin-top: 0 !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
 }
 
 .navbar-brand {

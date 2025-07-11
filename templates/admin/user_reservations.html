@@ -29,8 +29,8 @@
                         <tr>
                             <th>ID</th>
                             <th>Parking Spot</th>
-                            <th>Check-in</th>
-                            <th>Check-out</th>
+                            <th>Check-in <small class="text-muted">(IST)</small></th>
+                            <th>Check-out <small class="text-muted">(IST)</small></th>
                             <th>Status</th>
                             <th>Amount</th>
                             <th>Actions</th>
@@ -47,8 +47,8 @@
                                     N/A
                                 {% endif %}
                             </td>
-                            <td>{{ res.check_in.strftime('%Y-%m-%d %H:%M') if res.check_in else 'N/A' }}</td>
-                            <td>{{ res.check_out.strftime('%Y-%m-%d %H:%M') if res.check_out else 'In Progress' }}</td>
+                            <td>{{ res.check_in|localtime('%Y-%m-%d %H:%M') if res.check_in else 'N/A' }}</td>
+                            <td>{{ res.check_out|localtime('%Y-%m-%d %H:%M') if res.check_out else 'In Progress' }}</td>
                             <td>
                                 <span class="badge 
                                     {% if res.status == 'active' %}bg-success
@@ -104,6 +104,8 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ super() }}
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM fully loaded - initializing...');
@@ -212,42 +214,48 @@ function loadReservationDetails(reservationId, modalInstance) {
     })
     .then(data => {
         console.log('Received data:', data);
-        if (!data) {
-            throw new Error('No data received from server');
+        if (!data || !data.success || !data.reservation) {
+            throw new Error('Invalid data received from server');
         }
+        
+        // Extract the reservation data from the API response
+        const res = data.reservation;
+        console.log('Reservation details:', res);
         
         modalContent.innerHTML = `
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <h6>Reservation #${data.id}</h6>
+                    <h6>Reservation #${res.id || 'undefined'}</h6>
                     <p class="mb-1"><strong>Status:</strong> 
-                        <span class="badge ${getStatusBadgeClass(data.status)}">
-                            ${data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'Unknown'}
+                        <span class="badge ${getStatusBadgeClass(res.status)}">
+                            ${res.status ? res.status.charAt(0).toUpperCase() + res.status.slice(1) : 'Unknown'}
                         </span>
                     </p>
-                    <p class="mb-1"><strong>User:</strong> ${data.user?.username || 'N/A'} (${data.user?.email || 'N/A'})</p>
-                    <p class="mb-1"><strong>Vehicle:</strong> ${data.vehicle_registration || 'Not specified'}</p>
-                    <p class="mb-1"><strong>Driver's License:</strong> ${data.drivers_license || 'Not specified'}</p>
+                    <p class="mb-1"><strong>User:</strong> ${res.user?.username || 'N/A'} (${res.user?.email || 'N/A'})</p>
+                    <p class="mb-1"><strong>Vehicle:</strong> ${res.vehicle_registration || 'Not specified'}</p>
+                    <p class="mb-1"><strong>Driver's License:</strong> ${res.drivers_license || 'Not specified'}</p>
                 </div>
                 <div class="col-md-6">
                     <h6>Timing</h6>
-                    <p class="mb-1"><strong>Check-in:</strong> ${data.check_in ? new Date(data.check_in).toLocaleString() : 'N/A'}</p>
-                    <p class="mb-1"><strong>Check-out:</strong> ${data.check_out ? new Date(data.check_out).toLocaleString() : 'In Progress'}</p>
-                    <p class="mb-1"><strong>Duration:</strong> ${calculateDuration(data.check_in, data.check_out)}</p>
+                    <p class="mb-1"><strong>Check-in:</strong> ${res.check_in ? new Date(res.check_in).toLocaleString() : 'N/A'}</p>
+                    <p class="mb-1"><strong>Check-out:</strong> ${res.check_out ? new Date(res.check_out).toLocaleString() : 'In Progress'}</p>
+                    <p class="mb-1"><strong>Duration:</strong> ${calculateDuration(res.check_in, res.check_out)}</p>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6">
                     <h6>Parking Spot</h6>
-                    <p class="mb-1"><strong>Spot:</strong> ${data.spot?.spot_number || 'N/A'} ${data.spot?.parking_lot ? `(${data.spot.parking_lot.name})` : ''}</p>
-                    <p class="mb-1"><strong>Address:</strong> ${data.spot?.parking_lot?.address || 'Not specified'}</p>
-                    <p class="mb-1"><strong>Pincode:</strong> ${data.spot?.parking_lot?.pincode || 'Not specified'}</p>
+                    <p class="mb-1"><strong>Spot:</strong> ${res.spot?.spot_number || 'N/A'} ${res.spot?.parking_lot ? `(${res.spot.parking_lot.name})` : ''}</p>
+                    <p class="mb-1"><strong>Address:</strong> ${res.spot?.parking_lot?.address || 'Not specified'}</p>
+                    <p class="mb-1"><strong>Pincode:</strong> ${res.spot?.parking_lot?.pincode || 'Not specified'}</p>
                 </div>
                 <div class="col-md-6">
                     <h6>Payment</h6>
-                    <p class="mb-1"><strong>Amount:</strong> $${data.amount ? parseFloat(data.amount).toFixed(2) : '0.00'}</p>
-                    <p class="mb-1"><strong>Payment Method:</strong> ${data.payment_method ? formatPaymentMethod(data.payment_method) : 'Not specified'}</p>
-                    <p class="mb-1"><strong>Payment Status:</strong> ${data.payment_status || 'Not paid'}</p>
+                    <p class="mb-1"><strong>Amount:</strong> $${res.amount ? parseFloat(res.amount).toFixed(2) : '0.00'}</p>
+                    <p class="mb-1"><strong>Payment Method:</strong> ${formatPaymentMethod(res.payment_method) || 'Not specified'}</p>
+                    <p class="mb-1"><strong>Payment Status:</strong> ${formatPaymentStatus(res.payment_status) || 'Not paid'}</p>
+                    ${res.transaction_id ? `<p class="mb-1"><strong>Transaction ID:</strong> ${res.transaction_id}</p>` : ''}
+                    ${res.payment_date ? `<p class="mb-1"><strong>Payment Date:</strong> ${new Date(res.payment_date).toLocaleString()}</p>` : ''}
                 </div>
             </div>`;
     })
@@ -319,10 +327,27 @@ function formatPaymentMethod(method) {
         'debit_card': 'Debit Card',
         'upi': 'UPI',
         'net_banking': 'Net Banking',
-        'wallet': 'Wallet'
+        'wallet': 'Digital Wallet',
+        'cash': 'Cash',
+        'bank_transfer': 'Bank Transfer'
     };
     
-    return methods[method.toLowerCase()] || method;
+    return methods[method] || method.charAt(0).toUpperCase() + method.slice(1).replace('_', ' ');
+}
+
+function formatPaymentStatus(status) {
+    if (!status) return 'Not specified';
+    
+    const statuses = {
+        'pending': 'Pending',
+        'paid': 'Paid',
+        'failed': 'Failed',
+        'refunded': 'Refunded',
+        'cancelled': 'Cancelled',
+        'processing': 'Processing'
+    };
+    
+    return statuses[status] || status.charAt(0).toUpperCase() + status.slice(1);
 }
 </script>
 {% endblock %}

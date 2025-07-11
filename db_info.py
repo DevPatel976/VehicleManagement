@@ -10,7 +10,7 @@ def print_database_info():
         print("="*70)
         for table in tables:
             table_name = table[0]
-            if table_name == 'alembic_version':  
+            if table_name == 'alembic_version':
                 continue
             print("\n" + "-"*70)
             print(f"TABLE: {table_name}")

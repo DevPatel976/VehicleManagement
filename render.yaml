@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: parking-app
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: FLASK_APP
+        value: "app.py"
+      - key: FLASK_ENV
+        value: "production"
+
+databases:
+  - name: parking_db
+    databaseName: parking
+    user: parking_user
+    plan: free
